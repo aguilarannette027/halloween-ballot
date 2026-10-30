@@ -194,31 +194,43 @@ input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 .chip { display: inline-flex; align-items: center; gap: 6px; }
 .chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 
-/* ---------- winner announcement (projector mode) ---------- */
+/* ---------- winner announcement (big screen) ---------- */
 #stage {
-  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px 16px; text-align: center;
+  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center;
+  padding: 3vh 3vw 84px; text-align: center; overflow: auto;
   background: radial-gradient(ellipse at center, #2a1640 0%, #0b0710 70%);
 }
-#stage .award { font-family: Creepster, fantasy; color: var(--orange); font-size: clamp(34px, 7vw, 72px); line-height: 1; text-shadow: 0 0 24px rgba(255, 140, 26, 0.6); }
-#stage .award-blurb { color: var(--muted); margin: 8px 0 20px; }
-#stage .drum { font-size: 90px; animation: shake 0.5s infinite; }
+#stage .award { font-family: Creepster, fantasy; color: var(--orange); font-size: clamp(32px, 5vw, 96px); line-height: 1; text-shadow: 0 0 24px rgba(255, 140, 26, 0.6); }
+#stage .award-blurb { color: var(--muted); margin: 6px 0 2vh; font-size: clamp(14px, 1.5vw, 26px); }
+#stage .reveal { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4vw; width: 100%; flex-wrap: wrap; }
+#stage .drum { font-size: clamp(90px, 16vh, 200px); animation: shake 0.5s infinite; }
 @keyframes shake { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
-#stage .winners { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+#stage .winners { display: flex; gap: 3vw; justify-content: center; flex-wrap: wrap; }
 #stage .w { animation: rise 0.9s cubic-bezier(.2, 1.4, .4, 1) both; }
 @keyframes rise { from { transform: scale(0.3) translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
 #stage .w img, #stage .w .ph {
-  width: min(52vw, 300px); height: min(52vw, 300px); border-radius: 50%; object-fit: cover;
-  border: 6px solid var(--orange); box-shadow: 0 0 60px rgba(255, 140, 26, 0.6); background: #0f0916;
-  display: grid; place-items: center; font-size: 100px;
+  height: min(56vh, 115vw); width: auto; aspect-ratio: 3 / 4; max-width: 86vw; border-radius: 28px; object-fit: cover;
+  border: 6px solid var(--orange); box-shadow: 0 0 80px rgba(255, 140, 26, 0.55); background: #0f0916;
+  display: grid; place-items: center; font-size: 120px; margin: 0 auto;
 }
-#stage .squad-pics { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 760px; }
-#stage .squad-pics img, #stage .squad-pics .ph { width: min(30vw, 170px); height: min(30vw, 170px); border-width: 4px; font-size: 60px; }
-#stage .w .wn { font-family: Creepster, fantasy; font-size: clamp(32px, 6vw, 56px); color: var(--orange-2); margin-top: 14px; line-height: 1.05; }
-#stage .w .wc { color: var(--text); font-size: 18px; }
-#stage .meta { color: var(--muted); margin-top: 10px; font-size: 14px; }
-#stage .controls { display: flex; gap: 10px; margin-top: 26px; width: min(100%, 460px); }
-#stage .controls .btn { margin-top: 0; }
+#stage .winners.multi .w img, #stage .winners.multi .w .ph { height: min(44vh, 90vw); }
+#stage .squad-pics { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5vw; max-width: 70vw; }
+#stage .squad-pics img, #stage .squad-pics .ph { height: min(40vh, 60vw); border-width: 5px; font-size: 80px; }
+#stage .w .wn { font-family: Creepster, fantasy; font-size: clamp(36px, 5vw, 96px); color: var(--orange-2); margin-top: 1.5vh; line-height: 1.05; }
+#stage .w .wc { color: var(--text); font-size: clamp(16px, 1.8vw, 32px); }
+#stage .meta { color: var(--muted); margin-top: 1vh; font-size: clamp(14px, 1.4vw, 24px); }
+#stage .quotes { flex: 0 1 34vw; min-width: min(300px, 90vw); max-height: 70vh; overflow: auto; display: flex; flex-direction: column; gap: 1.6vh; text-align: left; }
+#stage .quote {
+  background: rgba(255, 255, 255, 0.06); border-left: 5px solid var(--orange); border-radius: 14px; padding: 1.4vh 1.4vw;
+  font-size: clamp(16px, 1.8vw, 34px); line-height: 1.3; animation: rise 0.8s ease both;
+}
+#stage .quote .by { display: block; margin-top: 6px; font-size: 0.6em; color: var(--muted); }
+#stage .controls {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; width: min(92vw, 520px);
+  opacity: 0.35; transition: opacity 0.2s;
+}
+#stage .controls:hover, #stage .controls:focus-within { opacity: 1; }
+#stage .controls .btn { margin-top: 0; padding: 10px 12px; font-size: 15px; box-shadow: none; }
 
 .host-ctl { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 14px; border-radius: 12px; background: #0f0916; border: 1px solid #2c1f3d; }
 .host-ctl .btn { margin-top: 0; width: auto; flex: 1; }
@@ -226,6 +238,35 @@ input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 #openState.open { color: var(--green); }
 #openState.closed { color: var(--blood); }
 .btn.danger { background: linear-gradient(180deg, #ff5a6e, var(--blood)); color: #fff; box-shadow: 0 6px 0 #6b0f1c; }
+
+.voter-banner {
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 14px; border-radius: 14px;
+  background: linear-gradient(90deg, rgba(155, 93, 229, 0.25), rgba(255, 140, 26, 0.15)); border: 1px solid rgba(255, 140, 26, 0.4);
+}
+.voter-banner:empty { display: none; }
+.voter-banner .avatar { width: 58px; height: 58px; }
+.voter-banner .who-txt { flex: 1; min-width: 0; }
+.voter-banner .lbl { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+.voter-banner .nm { font-family: Creepster, fantasy; font-size: 26px; color: var(--orange-2); line-height: 1.05; overflow-wrap: anywhere; }
+.voter-banner .ch { font-size: 13px; color: var(--text); }
+.voter-banner button { background: transparent; border: 1px solid var(--card-border); color: var(--orange-2); border-radius: 99px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; flex: none; }
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 12px; margin-top: 14px; }
+.pick-grid button {
+  position: relative; background: #0f0916; border: 1px solid #3a2850; border-radius: 14px; padding: 10px 6px; color: var(--text);
+  font: inherit; cursor: pointer; text-align: center;
+}
+.pick-grid button:hover, .pick-grid button:focus-visible { border-color: var(--orange); outline: none; }
+.pick-grid .avatar { width: 72px; height: 72px; margin: 0 auto 6px; }
+.pick-grid .pn { font-weight: 700; font-size: 14px; line-height: 1.2; overflow-wrap: anywhere; }
+.pick-grid .pc { font-size: 11.5px; color: var(--muted); line-height: 1.2; }
+.pick-grid .tick { position: absolute; top: 6px; right: 6px; background: var(--green); color: #0b2a07; border-radius: 99px; font-size: 10px; font-weight: 700; padding: 2px 6px; }
+.pick-head { grid-column: 1 / -1; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+textarea {
+  width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 12px; font: inherit; font-size: 15px; resize: vertical; min-height: 44px;
+  background: #0f0916; color: var(--text); border: 1px solid #3a2850; outline: none;
+}
+textarea:focus { border-color: var(--orange); }
+.result .quote-sm { font-size: 13px; color: var(--muted); margin: 4px 0 0 4px; font-style: italic; }
 
 .hidden { display: none !important; }
 .big-emoji { font-size: 72px; text-align: center; margin: 4px 0; }
@@ -251,7 +292,8 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
   </header>
 
   <nav class="tabs">
-    <button data-view="join" class="on">🕯️ Vote</button>
+    <button data-view="register" class="on">📸 Register</button>
+    <button data-view="vote">🗳️ Vote</button>
     <button data-view="results">🏆 Results</button>
     <button data-view="share">🔗 Invite</button>
   </nav>
@@ -260,10 +302,10 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     <b>Demo mode.</b> Votes are only saved on this device. Add your Firebase settings (see SETUP.md) so every guest's phone shares the same ballot box.
   </div>
 
-  <!-- STEP 1: who are you -->
-  <section id="view-join" class="card">
+  <!-- REGISTER (on arrival) -->
+  <section id="view-register" class="card">
     <h2>Register if you dare…</h2>
-    <p class="muted">Tell the spirits who you are. Your photo and character go on the ballot, and your photo appears on the big screen if you win. Kids without a phone can register on a parent's phone.</p>
+    <p class="muted">Sign in at the door with your costume photo. Your photo and character go on the ballot, and your photo appears on the big screen if you win. Kids without a phone can register on a parent's phone.</p>
     <form id="joinForm" autocomplete="off">
       <label>Your costume photo</label>
       <div class="photo-pick">
@@ -275,38 +317,54 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
           <input id="photoFile" type="file" accept="image/*" class="hidden">
         </div>
       </div>
-      <label for="name">Your name <span class="muted small">(kids can use their character's name)</span></label>
+      <label for="name">Your name</label>
       <input id="name" type="text" maxlength="40" placeholder="e.g. Annette" required>
       <label for="costume">Your character</label>
       <input id="costume" type="text" maxlength="60" placeholder="e.g. Victorian vampire" required>
       <label for="squad">Squad name <span class="muted small">(only if you're in a group or duo costume)</span></label>
       <input id="squad" type="text" maxlength="40" placeholder="e.g. The Addams Family">
       <p class="small muted" style="margin:6px 0 0">Everyone in the squad should type the same squad name.</p>
-      <button class="btn" type="submit" id="joinBtn">Summon my ballot 🎃</button>
+      <button class="btn" type="submit" id="joinBtn">Join the haunt 🎃</button>
       <div id="joinMsg"></div>
     </form>
   </section>
 
-  <!-- STEP 2: ballot -->
+  <section id="view-registered" class="card hidden">
+    <div class="big-emoji">🕯️</div>
+    <h2 style="text-align:center">You're on the ballot!</h2>
+    <div id="regCard" class="voter-banner"></div>
+    <p class="muted" style="text-align:center">Voting opens later in the party. When the host gives the signal, open the <b>Vote</b> tab and tap your photo.</p>
+    <button class="btn" id="regAnother" type="button">📸 Register another person</button>
+  </section>
+
+  <!-- VOTE: pick who is voting -->
+  <section id="view-pick" class="card hidden">
+    <h2>Who's voting?</h2>
+    <p class="muted">Tap your own photo to start. Sharing a phone? Take turns: pick yourself, vote, then pass the phone.</p>
+    <input id="pickSearch" type="text" placeholder="🔍 Search name or character" autocomplete="off">
+    <div id="pickGrid" class="pick-grid"></div>
+  </section>
+
+  <!-- VOTE: ballot -->
   <section id="view-vote" class="card hidden">
+    <div class="voter-banner" id="voteWho"></div>
     <h2>Cast your spell</h2>
-    <p class="muted">Voting as <b id="voterName"></b>. Pick one guest per category. You can't vote for yourself, and you can change your votes until the host closes voting. 🕸️</p>
-    <p class="small muted">Don't see someone? They haven't joined yet. The list updates live.</p>
+    <p class="muted">Pick one per award. You can't vote for yourself, and you can change your votes until the host closes voting. Comments are optional and may be read out when the winners are revealed. 🕸️</p>
+    <p class="small muted">Don't see someone? They haven't registered yet. The list updates live.</p>
     <form id="voteForm"><div id="cats"></div>
       <button class="btn" type="submit" id="voteBtn">Seal my votes in blood 🩸</button>
       <div id="voteMsg"></div>
     </form>
-    <button class="btn ghosty" id="notMe" type="button">Not you? Switch person</button>
   </section>
 
-  <!-- STEP 3: thank you -->
+  <!-- VOTE: done / closed -->
   <section id="view-done" class="card hidden">
+    <div class="voter-banner" id="doneWho"></div>
     <div class="big-emoji">⚰️</div>
     <h2 style="text-align:center" id="doneTitle">Your votes are sealed</h2>
-    <p class="muted" style="text-align:center" id="doneText">The spirits have recorded your choices. Results will be revealed by the host at the stroke of… whenever they feel like it.</p>
+    <p class="muted" style="text-align:center" id="doneText"></p>
     <button class="btn ghosty" id="changeBtn" type="button">✏️ Change my votes</button>
-    <button class="btn" id="nextBtn" type="button">👻 Next person on this phone</button>
-    <p class="small muted" style="text-align:center">Sharing a phone with kids or family? Tap above so the next person can register and vote.</p>
+    <button class="btn" id="nextBtn" type="button">👻 Next voter on this phone</button>
     <div class="stats">
       <div class="stat"><b id="dGuests">0</b><span class="small muted">souls joined</span></div>
       <div class="stat"><b id="dVotes">0</b><span class="small muted">ballots cast</span></div>
@@ -336,7 +394,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
       </div>
       <div id="toggleMsg"></div>
       <button class="btn" id="announceBtn" type="button">🎬 Announce the winners (full screen)</button>
-      <p class="small muted">Put this on a TV or projector. It reveals one award at a time with a drumroll and the winner's photo.</p>
+      <p class="small muted">Put this on a TV or projector. It reveals one award at a time with a drumroll, the winner's photo and the comments people wrote. Use the → and ← keys (or the buttons at the bottom) to move between awards.</p>
       <div id="results"></div>
       <h3 style="margin-top:24px">Guests</h3>
       <p class="small muted">Green outline = has voted.</p>
@@ -446,51 +504,67 @@ if (!live) $("demoNote").classList.remove("hidden");
 
 /* ---------- state ---------- */
 let guests = {}, votes = {}, open = true;
-let me = LS.get("hb-me"); // guest key on this device
+let me = LS.get("hb-me"); // who is voting on this phone right now
+let mine = (() => { try { return JSON.parse(LS.get("hb-mine")) || []; } catch { return []; } })(); // registered on this phone
+let lastReg = null; // just registered, for the confirmation screen
 let hostPin = LS.get("hb-pin") || ""; // saved only after the database accepted it
 let pinOk = !!hostPin;
 let editing = false;
-let view = "join";
+let view = "register";
 
-store.onGuests((g) => { guests = g; renderBallot(); renderResults(); });
-store.onVotes((v) => { votes = v; renderResults(); if (view === "join") show("join"); });
-store.onOpen((o) => { open = o; if (!o) editing = false; renderResults(); if (view === "join") show("join"); });
+store.onGuests((g) => { guests = g; refresh(); renderResults(); });
+store.onVotes((v) => { votes = v; refresh(); renderResults(); });
+store.onOpen((o) => { open = o; if (!o) editing = false; refresh(); renderResults(); });
+// Re-render the vote area when live data changes, without wiping a ballot that is being filled in.
+function refresh() {
+  if (view !== "vote") return;
+  const cur = sectionFor("vote");
+  if (cur === "vote" && !$("view-vote").classList.contains("hidden")) renderBallot();
+  else show("vote");
+}
 
 /* ---------- navigation ---------- */
+function sectionFor(name) {
+  if (name === "register") return lastReg ? "registered" : "register";
+  if (name === "vote") {
+    if (!open) return "done";
+    if (!me || !guests[me]) return "pick";
+    return votes[me] && !editing ? "done" : "vote";
+  }
+  return name;
+}
 function show(name) {
   view = name;
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
-  let section = name;
-  if (name === "join") section = !me ? "join" : !open || (votes[me] && !editing) ? "done" : "vote";
-  ["join", "vote", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  const section = sectionFor(name);
+  ["register", "registered", "pick", "vote", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  if (section === "pick") renderPick();
   if (section === "vote") renderBallot();
   if (section === "done") renderDone();
 }
-function renderDone() {
-  const voted = !!votes[me];
-  $("doneTitle").textContent = open ? "Your votes are sealed" : "Voting is closed";
-  $("doneText").textContent = open
-    ? "The spirits have recorded your choices. You can still change them until the host closes voting."
-    : voted ? "The crypt is sealed and your votes are locked in. Stay tuned for the winners!" : "The host has closed voting. Stay tuned for the winners!";
-  $("changeBtn").classList.toggle("hidden", !open || !voted);
-}
-$("changeBtn").addEventListener("click", () => { editing = true; show("join"); });
 document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 
-/* ---------- join ---------- */
+function banner(k, label, withSwitch) {
+  const g = guests[k];
+  if (!g) return "";
+  return `${avatar(g.photo, "avatar")}<div class="who-txt"><div class="lbl">${label}</div><div class="nm">${esc(g.name)}</div><div class="ch">${esc(g.costume || "")}${g.squad ? " · " + esc(g.squad) : ""}</div></div>${withSwitch ? `<button type="button" data-switch>Not you?</button>` : ""}`;
+}
+document.addEventListener("click", (e) => { if (e.target.closest("[data-switch]")) nextVoter(); });
+
+/* ---------- register ---------- */
 let photo = ""; // compressed JPEG data URL, small enough to live inside the guest record
 
-// Shrink the photo to a square-ish 480px JPEG (~40KB) so it loads fast on every phone.
+// Shrink the photo to at most 720px JPEG (~70KB) so it loads fast on every phone.
 function shrinkPhoto(file) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const max = 480, s = Math.min(1, max / Math.max(img.width, img.height));
+      const max = 720, s = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement("canvas");
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL("image/jpeg", 0.72));
+      resolve(c.toDataURL("image/jpeg", 0.7));
     };
     img.onerror = () => reject(new Error("bad_image"));
     img.src = URL.createObjectURL(file);
@@ -513,38 +587,81 @@ $("joinForm").addEventListener("submit", async (e) => {
   const key = keyOf(name);
   if (key.length < 2) return msg("joinMsg", "err", "Please enter your name.");
   if (!$("costume").value.trim()) return msg("joinMsg", "err", "Tell us your character.");
-  if (!photo && !guests[key]) return msg("joinMsg", "err", "Add a costume photo so you can be shown if you win.");
+  if (guests[key]) return msg("joinMsg", "err", `"${guests[key].name}" is already registered. If that's someone else, add a last initial (e.g. "${name} K").`);
+  if (!photo) return msg("joinMsg", "err", "Add a costume photo so you can be shown if you win.");
   const squad = $("squad").value.trim();
   $("joinBtn").disabled = true;
   try {
     await store.joinGuest(key, { name, costume: $("costume").value.trim(), squad, squadKey: squad ? keyOf(squad) : "", photo });
-    me = key; LS.set("hb-me", key);
+    guests[key] ||= { name, costume: $("costume").value.trim(), squad, photo };
+    if (!mine.includes(key)) { mine.push(key); LS.set("hb-mine", JSON.stringify(mine)); }
+    lastReg = key;
+    $("regCard").innerHTML = banner(key, "Registered", false);
     $("joinMsg").innerHTML = "";
-    show("join");
+    show("register"); scrollTo(0, 0);
   } catch (err) { console.error(err); msg("joinMsg", "err", "The spirits are restless. Check your connection and try again."); }
   $("joinBtn").disabled = false;
 });
-function nextVoter() {
-  me = null; editing = false; LS.del("hb-me");
+$("regAnother").addEventListener("click", () => {
+  lastReg = null;
   photo = ""; $("photoPreview").innerHTML = "<span>🎃</span>";
   ["name", "costume", "squad"].forEach((id) => ($(id).value = ""));
-  show("join"); scrollTo(0, 0);
+  show("register"); scrollTo(0, 0);
+});
+
+/* ---------- vote: who is voting ---------- */
+function renderPick() {
+  const q = $("pickSearch").value.trim().toLowerCase();
+  const all = Object.entries(guests)
+    .filter(([, g]) => !q || g.name.toLowerCase().includes(q) || (g.costume || "").toLowerCase().includes(q))
+    .sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const tile = ([k, g]) => `<button type="button" data-k="${esc(k)}">${votes[k] ? `<span class="tick">voted ✓</span>` : ""}${avatar(g.photo, "avatar")}<div class="pn">${esc(g.name)}</div><div class="pc">${esc(g.costume || "")}</div></button>`;
+  const here = all.filter(([k]) => mine.includes(k)), rest = all.filter(([k]) => !mine.includes(k));
+  $("pickGrid").innerHTML = !all.length
+    ? `<p class="muted small" style="grid-column:1/-1">${q ? "Nobody matches that search." : "Nobody has registered yet. Head to the Register tab first."}</p>`
+    : (here.length ? `<div class="pick-head">Registered on this phone</div>${here.map(tile).join("")}${rest.length ? `<div class="pick-head">Everyone else</div>` : ""}` : "") + rest.map(tile).join("");
 }
-$("notMe").addEventListener("click", nextVoter);
+$("pickSearch").addEventListener("input", renderPick);
+$("pickGrid").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-k]");
+  if (!b) return;
+  me = b.dataset.k; LS.set("hb-me", me); editing = false;
+  $("pickSearch").value = "";
+  show("vote"); scrollTo(0, 0);
+});
+function nextVoter() {
+  me = null; editing = false; LS.del("hb-me");
+  show("vote"); scrollTo(0, 0);
+}
 $("nextBtn").addEventListener("click", nextVoter);
 
-/* ---------- ballot ---------- */
+/* ---------- vote: done / closed ---------- */
+function renderDone() {
+  const voted = !!(me && votes[me]);
+  $("doneWho").innerHTML = me && guests[me] ? banner(me, voted ? "Voted as" : "Voter", false) : "";
+  $("doneTitle").textContent = open ? "Your votes are sealed" : "Voting is closed";
+  $("doneText").textContent = open
+    ? "The spirits have recorded your choices. You can still change them until the host closes voting."
+    : voted ? "Your votes are locked in. Stay tuned for the winners!" : "Voting isn't open right now. The host will open it when it's time.";
+  $("changeBtn").classList.toggle("hidden", !open || !voted);
+  $("nextBtn").classList.toggle("hidden", !open);
+}
+$("changeBtn").addEventListener("click", () => { editing = true; show("vote"); });
+
+/* ---------- vote: ballot ---------- */
 function renderBallot() {
-  if (!me) return;
-  $("voterName").textContent = guests[me]?.name || me;
+  if (!me || !guests[me]) return;
+  $("voteWho").innerHTML = banner(me, "Voting as", true);
   const others = Object.entries(guests).filter(([k]) => k !== me).sort((a, b) => a[1].name.localeCompare(b[1].name));
   const opts = others.map(([k, g]) => `<option value="${esc(k)}">${esc(g.name)}${g.costume ? " · " + esc(g.costume) : ""}</option>`).join("");
   const mySquad = guests[me]?.squadKey;
   const squadOpts = Object.entries(squads()).filter(([k]) => k !== mySquad).sort((a, b) => a[1].name.localeCompare(b[1].name))
     .map(([k, s]) => `<option value="${esc(k)}">${esc(s.name)} · ${esc(s.members.map((m) => m.name).join(", "))}</option>`).join("");
-  // Keep what's picked on screen; otherwise start from this guest's saved votes.
-  const keep = { ...(votes[me]?.picks || {}) };
-  if ($("cats").dataset.voter === me) document.querySelectorAll("#cats select").forEach((s) => (keep[s.name] = s.value));
+  // Keep what's on screen for this voter; otherwise start from their saved ballot.
+  const saved = votes[me] || {};
+  const keep = { ...(saved.picks || {}) };
+  Object.entries(saved.comments || {}).forEach(([k, v]) => (keep["c_" + k] = v));
+  if ($("cats").dataset.voter === me) document.querySelectorAll("#cats select, #cats textarea").forEach((s) => (keep[s.name] = s.value));
   $("cats").dataset.voter = me;
   $("cats").innerHTML = P.categories.map((c) => `
     <div class="cat">
@@ -552,30 +669,34 @@ function renderBallot() {
       ${c.criteria ? `<ul class="criteria">${c.criteria.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${c.group && !squadOpts
         ? `<p class="small muted" style="margin-top:10px">No squads have registered yet. Groups appear here once their members type a squad name.</p>`
-        : `<select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "Choose a squad…" : "Choose a guest…"}</option>${c.group ? squadOpts : opts}</select>`}
+        : `<select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "Choose a squad…" : "Choose a guest…"}</option>${c.group ? squadOpts : opts}</select>
+           <textarea name="c_${esc(c.id)}" maxlength="140" rows="1" placeholder="💬 Optional: share why you love their costume!"></textarea>`}
     </div>`).join("");
-  document.querySelectorAll("#cats select").forEach((s) => { if (keep[s.name]) s.value = keep[s.name]; });
+  document.querySelectorAll("#cats select, #cats textarea").forEach((s) => { if (keep[s.name]) s.value = keep[s.name]; });
   $("voteBtn").disabled = others.length === 0;
   $("voteBtn").textContent = votes[me] ? "Update my votes 🩸" : "Seal my votes in blood 🩸";
-  if (!others.length) msg("voteMsg", "demo", "No other guests have joined yet. Hang tight, the list fills in as people arrive.");
+  if (!others.length) msg("voteMsg", "demo", "No other guests have registered yet. Hang tight, the list fills in as people arrive.");
   else if ($("voteMsg").firstChild?.classList?.contains("demo")) $("voteMsg").innerHTML = "";
 }
 
 $("voteForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const picks = {};
+  const picks = {}, comments = {};
   for (const s of document.querySelectorAll("#cats select")) {
-    if (!s.value && s.required) return msg("voteMsg", "err", "Pick someone in every category.");
-    if (s.value) picks[s.name] = s.value;
+    if (!s.value && s.required) return msg("voteMsg", "err", "Pick someone in every award.");
+    if (!s.value) continue;
+    picks[s.name] = s.value;
+    const note = document.querySelector(`#cats textarea[name="c_${s.name}"]`)?.value.trim();
+    if (note) comments[s.name] = note;
   }
   $("voteBtn").disabled = true;
   try {
-    await store.saveVote(me, { voter: guests[me]?.name || me, picks });
+    await store.saveVote(me, { voter: guests[me]?.name || me, picks, comments });
     editing = false;
     $("voteMsg").innerHTML = "";
-    show("join");
+    show("vote"); scrollTo(0, 0);
   } catch (err) {
-    if (err.message === "closed") { editing = false; show("join"); }
+    if (err.message === "closed") { editing = false; show("vote"); }
     else { console.error(err); msg("voteMsg", "err", "Your vote didn't go through. Check your connection and try again."); }
   }
   $("voteBtn").disabled = false;
@@ -594,12 +715,14 @@ function renderResults() {
   $("toggleBtn").textContent = open ? "🔒 Close voting" : "🔓 Reopen voting";
   $("toggleBtn").classList.toggle("danger", open);
   $("results").innerHTML = P.categories.map((c) => {
-    const { rows, top, winners } = tally(c);
+    const { rows, top, winners, keys } = tally(c);
+    const quotes = winnerComments(c, keys);
     if (!rows.length) return `<div class="result cat"><h3>${c.icon} ${esc(c.name)}</h3><p class="muted small">No votes yet.</p></div>`;
     return `<div class="result cat">
       <h3>${c.icon} ${esc(c.name)}</h3>
       ${winners.map((w) => `<div class="winner">${avatar(w.photo, "avatar")}<div><div class="name">🏆 ${esc(w.name)}</div>
         <div class="small muted">${esc(w.sub)} · ${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · it's a tie!" : ""}</div></div></div>`).join("")}
+      ${quotes.map((q) => `<p class="quote-sm">💬 “${esc(q.text)}” — ${esc(q.by)}</p>`).join("")}
       ${rows.slice(0, 5).map(([k, n]) => { const e = entity(c, k); return `<div class="row"><span class="who">${avatar(e.photo, "mini")}<span class="nm">${esc(e.name)}</span></span><span class="bar"><i style="width:${(n / top) * 100}%"></i></span><span>${n}</span></div>`; }).join("")}
     </div>`;
   }).join("");
@@ -631,50 +754,66 @@ function tally(c) {
   Object.values(votes).forEach((v) => { const k = v.picks?.[c.id]; if (k) t[k] = (t[k] || 0) + 1; });
   const rows = Object.entries(t).sort((a, b) => b[1] - a[1]);
   const top = rows[0]?.[1] || 0;
-  return { rows, top, winners: rows.filter((r) => r[1] === top).map((r) => entity(c, r[0])) };
+  const keys = rows.filter((r) => r[1] === top).map((r) => r[0]);
+  return { rows, top, keys, winners: keys.map((k) => entity(c, k)) };
 }
 function avatar(src, cls) {
   return src ? `<img class="${cls}" alt="" src="${esc(src)}">` : `<span class="${cls}">🎃</span>`;
 }
 
 /* ---------- winner announcement ---------- */
+// Comments people wrote for whoever won this award, with the voter's name.
+function winnerComments(c, keys) {
+  return Object.values(votes)
+    .filter((v) => keys.includes(v.picks?.[c.id]) && v.comments?.[c.id])
+    .map((v) => ({ text: v.comments[c.id], by: v.voter || "" }));
+}
 let slide = 0, slideTimer;
 function renderStage() {
   clearTimeout(slideTimer);
   const st = $("stage");
+  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide ? "" : "disabled"}>◀ Back</button>
+    <button class="btn ghosty" data-a="close">Exit</button>
+    ${slide < P.categories.length ? `<button class="btn" data-a="next">Next ▶</button>` : ""}</div>`;
   if (slide >= P.categories.length) {
-    st.innerHTML = `<div class="big-emoji">🎃🦇👻</div><div class="award">Happy Halloween!</div>
-      <p class="award-blurb">Thanks for haunting with us tonight.</p>
-      <div class="controls"><button class="btn ghosty" data-a="prev">◀ Back</button><button class="btn" data-a="close">Close</button></div>`;
+    st.innerHTML = `<div class="reveal" style="flex-direction:column"><div class="big-emoji" style="font-size:16vh">🎃🦇👻</div>
+      <div class="award">Happy Halloween!</div><p class="award-blurb">Thanks for haunting with us tonight.</p></div>${ctl}`;
     return;
   }
   const c = P.categories[slide];
-  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide ? "" : "disabled"}>◀ Back</button><button class="btn" data-a="next">Next award ▶</button></div>
-    <button class="btn ghosty" data-a="close" style="width:auto;margin-top:12px;padding:8px 16px;font-size:14px">Exit</button>`;
-  st.innerHTML = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>
-    <div class="drum">🥁</div><p class="meta">And the winner is…</p>${ctl}`;
+  const head = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>`;
+  st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">And the winner is…</p></div>${ctl}`;
   slideTimer = setTimeout(() => {
-    const { winners, top } = tally(c);
+    const { winners, top, keys } = tally(c);
+    const quotes = winnerComments(c, keys);
     const body = winners.length
-      ? `<div class="winners">${winners.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
+      ? `<div><div class="winners ${winners.length > 1 ? "multi" : ""}">${winners.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
           ${c.group && w.photos.length > 1
             ? `<div class="squad-pics">${w.photos.map((p) => p ? `<img alt="" src="${esc(p)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
             : w.photo ? `<img alt="${esc(w.name)}" src="${esc(w.photo)}">` : `<div class="ph">🎃</div>`}
           <div class="wn">${esc(w.name)}</div><div class="wc">${esc(w.sub)}</div></div>`).join("")}</div>
-         <p class="meta">${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · a ghoulish tie!" : ""}</p>`
-      : `<p class="meta">No votes in this category.</p>`;
-    st.innerHTML = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>${body}${ctl}`;
+         <p class="meta">${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · a ghoulish tie!" : ""}</p></div>
+         ${quotes.length ? `<div class="quotes">${quotes.map((q, i) => `<div class="quote" style="animation-delay:${1 + i * 0.6}s">“${esc(q.text)}”${q.by ? `<span class="by">— ${esc(q.by)}</span>` : ""}</div>`).join("")}</div>` : ""}`
+      : `<p class="meta">No votes in this award.</p>`;
+    st.innerHTML = `${head}<div class="reveal">${body}</div>${ctl}`;
   }, 3000);
+}
+function stageGo(a) {
+  if (a === "next" && slide < P.categories.length) { slide++; renderStage(); }
+  else if (a === "prev" && slide > 0) { slide--; renderStage(); }
+  else if (a === "close") { clearTimeout(slideTimer); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); }
 }
 $("announceBtn").addEventListener("click", () => {
   slide = 0; $("stage").classList.remove("hidden"); renderStage();
   document.documentElement.requestFullscreen?.().catch(() => {});
 });
-$("stage").addEventListener("click", (e) => {
-  const a = e.target.closest("[data-a]")?.dataset.a;
-  if (a === "next") { slide++; renderStage(); }
-  else if (a === "prev") { slide = Math.max(0, slide - 1); renderStage(); }
-  else if (a === "close") { clearTimeout(slideTimer); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); }
+$("stage").addEventListener("click", (e) => { const a = e.target.closest("[data-a]")?.dataset.a; if (a) stageGo(a); });
+// Presenter keys: → / space for next, ← for back, Esc to exit.
+document.addEventListener("keydown", (e) => {
+  if ($("stage").classList.contains("hidden")) return;
+  if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); stageGo("next"); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") stageGo("prev");
+  else if (e.key === "Escape") stageGo("close");
 });
 $("pinForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -708,7 +847,7 @@ $("copyBtn").addEventListener("click", async () => {
 
 function msg(id, kind, text) { $(id).innerHTML = `<div class="notice ${kind}">${esc(text)}</div>`; }
 
-if (location.hash === "#results") show("results"); else show("join");
+show(location.hash === "#results" ? "results" : location.hash === "#vote" ? "vote" : "register");
 </script>
 </body>
 </html>
