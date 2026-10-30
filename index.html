@@ -105,7 +105,7 @@ header.hero h1 {
 header.hero p { margin: 8px 0 0; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; font-size: 13px; }
 nav.tabs { display: flex; gap: 8px; justify-content: center; margin: 22px 0 8px; flex-wrap: wrap; }
 nav.tabs button {
-  background: transparent; border: 1px solid var(--card-border); color: var(--muted);
+  background: rgba(11, 7, 16, 0.75); border: 1px solid var(--card-border); color: var(--muted);
   padding: 8px 16px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 14px;
 }
 nav.tabs button.on { background: var(--orange); color: #1a0d00; border-color: var(--orange); font-weight: 700; }
@@ -268,10 +268,46 @@ textarea {
 textarea:focus { border-color: var(--orange); }
 .result .quote-sm { font-size: 13px; color: var(--muted); margin: 4px 0 0 4px; font-style: italic; }
 
+.runoff-bar {
+  display: block; width: 100%; margin: 10px 0; padding: 14px; border: 0; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(90deg, var(--purple), var(--orange)); color: #fff; font: inherit; font-weight: 700; font-size: 16px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 140, 26, 0.6); } 50% { box-shadow: 0 0 0 10px rgba(255, 140, 26, 0); } }
+.runoff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-top: 14px; }
+.runoff-grid button {
+  position: relative; background: #0f0916; border: 2px solid #3a2850; border-radius: 16px; padding: 10px; color: var(--text);
+  font: inherit; cursor: pointer; text-align: center;
+}
+.runoff-grid button.on { border-color: var(--green); box-shadow: 0 0 24px rgba(124, 255, 107, 0.35); }
+.runoff-grid img, .runoff-grid .ph { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 12px; display: grid; place-items: center; font-size: 60px; background: #1d1229; }
+.runoff-grid .pn { font-weight: 700; margin-top: 8px; }
+.runoff-grid .pc { font-size: 13px; color: var(--muted); }
+.runoff-grid .tick { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--green); color: #0b2a07; border-radius: 99px; font-size: 12px; font-weight: 700; padding: 3px 10px; white-space: nowrap; }
+#stage .winners.small .w img, #stage .winners.small .w .ph { height: min(34vh, 70vw); }
+#stage .winners.small .w .wn { font-size: clamp(28px, 3.5vw, 64px); }
+#stage .live { font-size: clamp(18px, 2vw, 36px); color: var(--text); margin-top: 1vh; }
+#stage .live b { color: var(--green); font-family: Creepster, fantasy; font-weight: 400; font-size: 1.5em; }
+#stage .stage-act { width: auto; padding: 14px 28px; font-size: clamp(16px, 1.6vw, 26px); margin-top: 2vh; }
+
+.finder { margin-top: 10px; }
+.suggest { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.suggest:empty { display: none; }
+.suggest button {
+  display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  background: #1d1229; border: 1px solid #3a2850; color: var(--text); font: inherit; font-size: 14px;
+}
+.suggest button:hover, .suggest button.on { border-color: var(--orange); }
+.suggest .mini { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: none; display: grid; place-items: center; background: #0f0916; }
+.cat select { margin-top: 8px; }
+
 .hidden { display: none !important; }
 .big-emoji { font-size: 72px; text-align: center; margin: 4px 0; }
 footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; }
 
+@media (max-width: 600px) {
+  .moon { width: 56px; height: 56px; top: 12px; right: 12px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .fog, .floaty, .ghost { animation: none; }
 }
@@ -297,6 +333,8 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     <button data-view="results">🏆 Results</button>
     <button data-view="share">🔗 Invite</button>
   </nav>
+
+  <button id="runoffBar" class="runoff-bar hidden" type="button">⚡ <span id="runoffBarTxt"></span></button>
 
   <div id="demoNote" class="notice demo hidden">
     <b>Demo mode.</b> Votes are only saved on this device. Add your Firebase settings (see SETUP.md) so every guest's phone shares the same ballot box.
@@ -357,6 +395,16 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     </form>
   </section>
 
+  <!-- VOTE: tie-breaker -->
+  <section id="view-runoff" class="card hidden">
+    <div class="voter-banner" id="runoffWho"></div>
+    <h2>⚡ Tie-breaker!</h2>
+    <p class="muted">It's a tie for <b id="runoffTitle"></b>. Only one can win, so tap your favorite below.</p>
+    <div id="runoffChoices" class="runoff-grid"></div>
+    <div id="runoffMsg"></div>
+    <button class="btn" id="runoffNext" type="button">👻 Next voter on this phone</button>
+  </section>
+
   <!-- VOTE: done / closed -->
   <section id="view-done" class="card hidden">
     <div class="voter-banner" id="doneWho"></div>
@@ -393,8 +441,9 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
         <button class="btn" id="toggleBtn" type="button"></button>
       </div>
       <div id="toggleMsg"></div>
+      <button class="btn ghosty" id="resetTies" type="button" style="font-size:14px;padding:10px">Clear tie-breaker results (after a test run)</button>
       <button class="btn" id="announceBtn" type="button">🎬 Announce the winners (full screen)</button>
-      <p class="small muted">Put this on a TV or projector. It reveals one award at a time with a drumroll, the winner's photo and the comments people wrote. Use the → and ← keys (or the buttons at the bottom) to move between awards.</p>
+      <p class="small muted">Put this on a TV or projector. You control the pace: each award opens on a drumroll, and nothing is revealed until you press → (or space, or the Reveal button). Ties get a tie-breaker vote right there on the big screen.</p>
       <div id="results"></div>
       <h3 style="margin-top:24px">Guests</h3>
       <p class="small muted">Green outline = has voted.</p>
@@ -444,19 +493,39 @@ document.title = P.title;
 
 function demoStore() {
   const K = "haunted-ballot-demo";
-  const blank = () => ({ guests: {}, votes: {}, open: true });
+  const blank = () => ({ guests: {}, votes: {}, open: true, runoff: null, decided: {}, rvotes: {} });
   const load = () => { try { return { ...blank(), ...JSON.parse(LS.get(K)) }; } catch { return blank(); } };
   const save = (d) => { LS.set(K, JSON.stringify(d)); fire(); };
-  const subs = { guests: [], votes: [], open: [] };
-  const fire = () => { const d = load(); subs.guests.forEach((f) => f(d.guests)); subs.votes.forEach((f) => f(d.votes)); subs.open.forEach((f) => f(d.open)); };
+  const subs = { guests: [], votes: [], open: [], runoff: [], decided: [] };
+  let rsub = null; // [round, cb]
+  const fire = () => {
+    const d = load();
+    subs.guests.forEach((f) => f(d.guests)); subs.votes.forEach((f) => f(d.votes)); subs.open.forEach((f) => f(d.open));
+    subs.runoff.forEach((f) => f(d.runoff)); subs.decided.forEach((f) => f(d.decided));
+    if (rsub) rsub[1](d.rvotes[rsub[0]] || {});
+  };
   window.addEventListener("storage", (e) => { if (e.key === K) fire(); });
   return {
     onGuests(cb) { subs.guests.push(cb); cb(load().guests); },
     onVotes(cb) { subs.votes.push(cb); cb(load().votes); },
     onOpen(cb) { subs.open.push(cb); cb(load().open); },
+    onRunoff(cb) { subs.runoff.push(cb); cb(load().runoff); },
+    onDecided(cb) { subs.decided.push(cb); cb(load().decided); },
+    onRunoffVotes(round, cb) { rsub = round ? [round, cb] : null; if (round) cb(load().rvotes[round] || {}); },
     async joinGuest(key, data) { const d = load(); if (!d.guests[key]) { d.guests[key] = data; save(d); } },
     async saveVote(key, data) { const d = load(); if (!d.open) throw new Error("closed"); d.votes[key] = data; save(d); },
-    async hostSet(pin, open) { if (pin !== P.demoPin) throw new Error("wrong_pin"); const d = load(); d.open = open; save(d); }
+    async saveRunoffVote(round, key, pick) {
+      const d = load();
+      if (!d.runoff?.open || d.runoff.round !== round) throw new Error("closed");
+      (d.rvotes[round] ||= {})[key] = { pick }; save(d);
+    },
+    async hostSet(pin, open, extra = {}) {
+      if (pin !== P.demoPin) throw new Error("wrong_pin");
+      const d = load(); d.open = open;
+      if ("runoff" in extra) d.runoff = extra.runoff;
+      if (extra.decided) d.decided = extra.resetDecided ? { ...extra.decided } : { ...d.decided, ...extra.decided };
+      save(d);
+    }
   };
 }
 
@@ -466,11 +535,17 @@ async function firebaseStore(cfg) {
   const fs = await import(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore.js`);
   const db = fs.getFirestore(initializeApp(cfg));
   const asMap = (snap) => { const m = {}; snap.forEach((d) => (m[d.id] = d.data())); return m; };
-  let open = true;
+  let open = true, unsubR = null;
   return {
     onGuests(cb) { fs.onSnapshot(fs.collection(db, "guests"), (s) => cb(asMap(s))); },
     onVotes(cb) { fs.onSnapshot(fs.collection(db, "votes"), (s) => cb(asMap(s))); },
     onOpen(cb) { fs.onSnapshot(fs.doc(db, "public", "state"), (s) => cb((open = !s.exists() || s.data().open !== false))); },
+    onRunoff(cb) { fs.onSnapshot(fs.doc(db, "public", "runoff"), (s) => cb(s.exists() ? s.data() : null)); },
+    onDecided(cb) { fs.onSnapshot(fs.doc(db, "public", "decided"), (s) => cb(s.exists() ? s.data() : {})); },
+    onRunoffVotes(round, cb) {
+      unsubR?.(); unsubR = null;
+      if (round) unsubR = fs.onSnapshot(fs.collection(db, "runoffs", round, "votes"), (s) => cb(asMap(s)));
+    },
     async joinGuest(key, data) {
       const ref = fs.doc(db, "guests", key);
       if ((await fs.getDoc(ref)).exists()) return; // already registered, keep their original photo
@@ -480,11 +555,18 @@ async function firebaseStore(cfg) {
       try { await fs.setDoc(fs.doc(db, "votes", key), { ...data, at: fs.serverTimestamp() }); }
       catch (e) { if (e.code === "permission-denied" && !open) throw new Error("closed"); throw e; }
     },
-    // The PIN is checked by the database rules (it never appears in this page), so a wrong PIN fails the write.
-    async hostSet(pin, open) {
+    async saveRunoffVote(round, key, pick) {
+      try { await fs.setDoc(fs.doc(db, "runoffs", round, "votes", key), { pick }); }
+      catch (e) { if (e.code === "permission-denied") throw new Error("closed"); throw e; }
+    },
+    // Host actions. The PIN is checked by the database rules (it never appears in this page), so a
+    // wrong PIN fails the whole batch. extra can replace the tie-breaker and record decided winners.
+    async hostSet(pin, open, extra = {}) {
       const b = fs.writeBatch(db);
-      b.set(fs.doc(db, "control", "state"), { pin, open });
+      b.set(fs.doc(db, "control", "state"), { pin, open, at: fs.serverTimestamp() });
       b.set(fs.doc(db, "public", "state"), { open });
+      if ("runoff" in extra) b.set(fs.doc(db, "public", "runoff"), extra.runoff || { open: false, cat: "" });
+      if (extra.decided) b.set(fs.doc(db, "public", "decided"), extra.decided, { merge: !extra.resetDecided });
       try { await b.commit(); }
       catch (e) { if (e.code === "permission-denied") throw new Error("wrong_pin"); throw e; }
     }
@@ -504,6 +586,7 @@ if (!live) $("demoNote").classList.remove("hidden");
 
 /* ---------- state ---------- */
 let guests = {}, votes = {}, open = true;
+let runoff = null, rvotes = {}, decided = {}; // tie-breaker in progress, its votes, and winners settled by tie-breakers
 let me = LS.get("hb-me"); // who is voting on this phone right now
 let mine = (() => { try { return JSON.parse(LS.get("hb-mine")) || []; } catch { return []; } })(); // registered on this phone
 let lastReg = null; // just registered, for the confirmation screen
@@ -515,11 +598,22 @@ let view = "register";
 store.onGuests((g) => { guests = g; refresh(); renderResults(); });
 store.onVotes((v) => { votes = v; refresh(); renderResults(); });
 store.onOpen((o) => { open = o; if (!o) editing = false; refresh(); renderResults(); });
+store.onDecided((d) => { decided = d || {}; renderResults(); drawStage(); });
+store.onRunoff((r) => {
+  const newRound = r?.round !== runoff?.round;
+  runoff = r && r.cat ? r : null;
+  if (newRound) { rvotes = {}; store.onRunoffVotes(runoff?.round, (v) => { rvotes = v; refresh(); drawStage(); }); }
+  $("runoffBar").classList.toggle("hidden", !runoff?.open || view === "vote");
+  if (runoff?.open) $("runoffBarTxt").textContent = `Tie-breaker for ${catOf(runoff.cat)?.name || "an award"} is open! Tap to vote`;
+  refresh(); renderResults(); drawStage();
+});
+const catOf = (id) => P.categories.find((c) => c.id === id);
 // Re-render the vote area when live data changes, without wiping a ballot that is being filled in.
 function refresh() {
   if (view !== "vote") return;
   const cur = sectionFor("vote");
   if (cur === "vote" && !$("view-vote").classList.contains("hidden")) renderBallot();
+  else if (cur === "runoff" && !$("view-runoff").classList.contains("hidden")) renderRunoff();
   else show("vote");
 }
 
@@ -527,6 +621,7 @@ function refresh() {
 function sectionFor(name) {
   if (name === "register") return lastReg ? "registered" : "register";
   if (name === "vote") {
+    if (runoff?.open) return me && guests[me] ? "runoff" : "pick";
     if (!open) return "done";
     if (!me || !guests[me]) return "pick";
     return votes[me] && !editing ? "done" : "vote";
@@ -537,10 +632,12 @@ function show(name) {
   view = name;
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
   const section = sectionFor(name);
-  ["register", "registered", "pick", "vote", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  ["register", "registered", "pick", "vote", "runoff", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
   if (section === "pick") renderPick();
   if (section === "vote") renderBallot();
   if (section === "done") renderDone();
+  if (section === "runoff") renderRunoff();
+  $("runoffBar").classList.toggle("hidden", !runoff?.open || name === "vote");
 }
 document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
 
@@ -635,6 +732,36 @@ function nextVoter() {
 }
 $("nextBtn").addEventListener("click", nextVoter);
 
+/* ---------- vote: tie-breaker ---------- */
+// The people (or squads) still in the tie. A guest can't vote for themselves or their own squad.
+function runoffChoices() {
+  const c = catOf(runoff.cat);
+  return runoff.candidates.map((k) => ({ k, ...entity(c, k), self: c.group ? guests[me]?.squadKey === k : k === me }));
+}
+function renderRunoff() {
+  if (!runoff?.open || !me) return;
+  const c = catOf(runoff.cat);
+  const mineNow = rvotes[me]?.pick;
+  const choices = runoffChoices();
+  const inTie = choices.some((x) => x.self);
+  $("runoffWho").innerHTML = banner(me, "Voting as", true);
+  $("runoffTitle").textContent = `${c.icon} ${c.name}`;
+  $("runoffChoices").innerHTML = inTie
+    ? `<p class="notice demo">You're one of the finalists! You can't vote for yourself, so sit back and keep your fingers crossed. 🤞</p>`
+    : choices.map((x) => `<button type="button" class="${mineNow === x.k ? "on" : ""}" data-r="${esc(x.k)}">
+        ${x.photo ? `<img alt="" src="${esc(x.photo)}">` : `<span class="ph">🎃</span>`}
+        <div class="pn">${esc(x.name)}</div><div class="pc">${esc(x.sub)}</div>${mineNow === x.k ? `<div class="tick">Your vote ✓</div>` : ""}</button>`).join("");
+  $("runoffMsg").innerHTML = mineNow && !inTie ? `<div class="notice ok">Vote in! You can switch until the host stops the tie-breaker.</div>` : "";
+}
+$("runoffChoices").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-r]");
+  if (!b || !runoff?.open) return;
+  try { await store.saveRunoffVote(runoff.round, me, b.dataset.r); rvotes = { ...rvotes, [me]: { pick: b.dataset.r } }; renderRunoff(); }
+  catch (err) { if (err.message === "closed") msg("runoffMsg", "err", "The tie-breaker just closed. Watch the big screen!"); else { console.error(err); msg("runoffMsg", "err", "Your vote didn't go through. Try again."); } }
+});
+$("runoffNext").addEventListener("click", nextVoter);
+$("runoffBar").addEventListener("click", () => { show("vote"); scrollTo(0, 0); });
+
 /* ---------- vote: done / closed ---------- */
 function renderDone() {
   const voted = !!(me && votes[me]);
@@ -669,15 +796,53 @@ function renderBallot() {
       ${c.criteria ? `<ul class="criteria">${c.criteria.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
       ${c.group && !squadOpts
         ? `<p class="small muted" style="margin-top:10px">No squads have registered yet. Groups appear here once their members type a squad name.</p>`
-        : `<select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "Choose a squad…" : "Choose a guest…"}</option>${c.group ? squadOpts : opts}</select>
+        : `<input type="text" class="finder" data-for="${esc(c.id)}" autocomplete="off" placeholder="${c.group ? "⌨️ Type a squad name…" : "⌨️ Type a guest's name or character…"}">
+           <div class="suggest" data-sug="${esc(c.id)}"></div>
+           <select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "…or choose a squad" : "…or choose from the list"}</option>${c.group ? squadOpts : opts}</select>
            <textarea name="c_${esc(c.id)}" maxlength="140" rows="1" placeholder="💬 Optional: share why you love their costume!"></textarea>`}
     </div>`).join("");
   document.querySelectorAll("#cats select, #cats textarea").forEach((s) => { if (keep[s.name]) s.value = keep[s.name]; });
+  document.querySelectorAll("#cats select").forEach(syncFinder);
   $("voteBtn").disabled = others.length === 0;
   $("voteBtn").textContent = votes[me] ? "Update my votes 🩸" : "Seal my votes in blood 🩸";
   if (!others.length) msg("voteMsg", "demo", "No other guests have registered yet. Hang tight, the list fills in as people arrive.");
   else if ($("voteMsg").firstChild?.classList?.contains("demo")) $("voteMsg").innerHTML = "";
 }
+
+// Type-to-find: typing a name or character shows matching guests to tap; the dropdown stays in sync.
+function finderMatches(c, q) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  const pool = c.group
+    ? Object.entries(squads()).filter(([k]) => k !== guests[me]?.squadKey).map(([k, sq]) => [k, { name: sq.name, costume: sq.members.map((m) => m.name).join(", "), photo: sq.members.find((m) => m.photo)?.photo }])
+    : Object.entries(guests).filter(([k]) => k !== me);
+  return pool.filter(([, g]) => g.name.toLowerCase().includes(q) || (g.costume || "").toLowerCase().includes(q)).slice(0, 6);
+}
+function syncFinder(sel) {
+  const f = document.querySelector(`#cats .finder[data-for="${sel.name}"]`);
+  if (f) f.value = sel.value ? sel.selectedOptions[0].textContent.split(" · ")[0] : "";
+  const sug = document.querySelector(`#cats [data-sug="${sel.name}"]`);
+  if (sug) sug.innerHTML = "";
+}
+$("cats").addEventListener("input", (e) => {
+  const f = e.target.closest(".finder");
+  if (!f) return;
+  const c = catOf(f.dataset.for);
+  const sel = document.querySelector(`#cats select[name="${c.id}"]`);
+  const hits = finderMatches(c, f.value);
+  sel.value = hits.length === 1 && hits[0][1].name.toLowerCase() === f.value.trim().toLowerCase() ? hits[0][0] : "";
+  document.querySelector(`#cats [data-sug="${c.id}"]`).innerHTML = f.value.trim() && !hits.length
+    ? `<p class="small muted">No match. They may not have registered yet.</p>`
+    : hits.map(([k, g]) => `<button type="button" data-pick="${esc(k)}" class="${sel.value === k ? "on" : ""}">${avatar(g.photo, "mini")}<span><b>${esc(g.name)}</b> <span class="muted">${esc(g.costume || "")}</span></span></button>`).join("");
+});
+$("cats").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pick]");
+  if (!b) return;
+  const id = b.parentElement.dataset.sug;
+  const sel = document.querySelector(`#cats select[name="${id}"]`);
+  sel.value = b.dataset.pick; syncFinder(sel);
+});
+$("cats").addEventListener("change", (e) => { if (e.target.matches("select")) syncFinder(e.target); });
 
 $("voteForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -715,13 +880,17 @@ function renderResults() {
   $("toggleBtn").textContent = open ? "🔒 Close voting" : "🔓 Reopen voting";
   $("toggleBtn").classList.toggle("danger", open);
   $("results").innerHTML = P.categories.map((c) => {
-    const { rows, top, winners, keys } = tally(c);
-    const quotes = winnerComments(c, keys);
+    const { rows, top } = tally(c);
+    const o = outcome(c);
+    const winners = o.state === "winner" ? o.keys.map((k) => entity(c, k)) : [];
+    const quotes = winners.length ? winnerComments(c, o.keys) : [];
     if (!rows.length) return `<div class="result cat"><h3>${c.icon} ${esc(c.name)}</h3><p class="muted small">No votes yet.</p></div>`;
     return `<div class="result cat">
       <h3>${c.icon} ${esc(c.name)}</h3>
       ${winners.map((w) => `<div class="winner">${avatar(w.photo, "avatar")}<div><div class="name">🏆 ${esc(w.name)}</div>
-        <div class="small muted">${esc(w.sub)} · ${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · it's a tie!" : ""}</div></div></div>`).join("")}
+        <div class="small muted">${esc(w.sub)}${decided[c.id] ? " · won the tie-breaker" : ` · ${top} vote${top === 1 ? "" : "s"}`}</div></div></div>`).join("")}
+      ${o.state === "tie" ? `<p class="notice demo">It's a tie between ${o.keys.map((k) => esc(entity(c, k).name)).join(" & ")}. Start a tie-breaker during the announcement.</p>` : ""}
+      ${o.state === "runoff" ? `<p class="notice demo">⚡ Tie-breaker in progress.</p>` : ""}
       ${quotes.map((q) => `<p class="quote-sm">💬 “${esc(q.text)}” — ${esc(q.by)}</p>`).join("")}
       ${rows.slice(0, 5).map(([k, n]) => { const e = entity(c, k); return `<div class="row"><span class="who">${avatar(e.photo, "mini")}<span class="nm">${esc(e.name)}</span></span><span class="bar"><i style="width:${(n / top) * 100}%"></i></span><span>${n}</span></div>`; }).join("")}
     </div>`;
@@ -768,43 +937,92 @@ function winnerComments(c, keys) {
     .filter((v) => keys.includes(v.picks?.[c.id]) && v.comments?.[c.id])
     .map((v) => ({ text: v.comments[c.id], by: v.voter || "" }));
 }
-let slide = 0, slideTimer;
-function renderStage() {
-  clearTimeout(slideTimer);
+// Where an award stands: a single winner, a tie waiting for a tie-breaker, or a tie-breaker in progress.
+function outcome(c) {
+  if (decided[c.id]) return { state: "winner", keys: [decided[c.id]] };
+  const { keys, top } = tally(c);
+  if (!keys.length) return { state: "none", keys };
+  if (runoff?.cat === c.id && runoff.open) return { state: "runoff", keys: runoff.candidates };
+  if (runoff?.cat === c.id && runoff.stillTied?.length > 1) return { state: "tie", keys: runoff.stillTied, again: true };
+  if (keys.length === 1) return { state: "winner", keys, top };
+  return { state: "tie", keys, top };
+}
+// The host moves through each award one click at a time: title + drumroll, then the reveal.
+let slide = 0, phase = "drum";
+function drawStage() {
   const st = $("stage");
-  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide ? "" : "disabled"}>◀ Back</button>
+  if (st.classList.contains("hidden")) return;
+  const last = slide >= P.categories.length;
+  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide || phase === "show" ? "" : "disabled"}>◀ Back</button>
     <button class="btn ghosty" data-a="close">Exit</button>
-    ${slide < P.categories.length ? `<button class="btn" data-a="next">Next ▶</button>` : ""}</div>`;
-  if (slide >= P.categories.length) {
+    ${last ? "" : `<button class="btn" data-a="next">${phase === "drum" ? "Reveal ▶" : "Next award ▶"}</button>`}</div>`;
+  if (last) {
     st.innerHTML = `<div class="reveal" style="flex-direction:column"><div class="big-emoji" style="font-size:16vh">🎃🦇👻</div>
       <div class="award">Happy Halloween!</div><p class="award-blurb">Thanks for haunting with us tonight.</p></div>${ctl}`;
     return;
   }
   const c = P.categories[slide];
   const head = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>`;
-  st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">And the winner is…</p></div>${ctl}`;
-  slideTimer = setTimeout(() => {
-    const { winners, top, keys } = tally(c);
-    const quotes = winnerComments(c, keys);
-    const body = winners.length
-      ? `<div><div class="winners ${winners.length > 1 ? "multi" : ""}">${winners.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
-          ${c.group && w.photos.length > 1
-            ? `<div class="squad-pics">${w.photos.map((p) => p ? `<img alt="" src="${esc(p)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
-            : w.photo ? `<img alt="${esc(w.name)}" src="${esc(w.photo)}">` : `<div class="ph">🎃</div>`}
-          <div class="wn">${esc(w.name)}</div><div class="wc">${esc(w.sub)}</div></div>`).join("")}</div>
-         <p class="meta">${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · a ghoulish tie!" : ""}</p></div>
-         ${quotes.length ? `<div class="quotes">${quotes.map((q, i) => `<div class="quote" style="animation-delay:${1 + i * 0.6}s">“${esc(q.text)}”${q.by ? `<span class="by">— ${esc(q.by)}</span>` : ""}</div>`).join("")}</div>` : ""}`
-      : `<p class="meta">No votes in this award.</p>`;
-    st.innerHTML = `${head}<div class="reveal">${body}</div>${ctl}`;
-  }, 3000);
+  if (phase === "drum") {
+    st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">And the winner is…</p></div>${ctl}`;
+    return;
+  }
+  const o = outcome(c);
+  const ents = o.keys.map((k) => entity(c, k));
+  const pics = (list, cls = "") => `<div class="winners ${list.length > 1 ? "multi" : ""} ${cls}">${list.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
+      ${c.group && w.photos.length > 1 && list.length === 1
+        ? `<div class="squad-pics">${w.photos.map((p) => p ? `<img alt="" src="${esc(p)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
+        : w.photo ? `<img alt="${esc(w.name)}" src="${esc(w.photo)}">` : `<div class="ph">🎃</div>`}
+      <div class="wn">${esc(w.name)}</div><div class="wc">${esc(w.sub)}</div></div>`).join("")}</div>`;
+  let body;
+  if (o.state === "none") body = `<p class="meta">No votes in this award.</p>`;
+  else if (o.state === "winner") {
+    const quotes = winnerComments(c, o.keys);
+    body = `<div>${pics(ents)}</div>
+      ${quotes.length ? `<div class="quotes">${quotes.map((q, i) => `<div class="quote" style="animation-delay:${1 + i * 0.6}s">“${esc(q.text)}”${q.by ? `<span class="by">— ${esc(q.by)}</span>` : ""}</div>`).join("")}</div>` : ""}`;
+  } else if (o.state === "tie") {
+    body = `<div style="text-align:center"><div class="award" style="font-size:clamp(26px,3.4vw,60px);margin-bottom:2vh">${o.again ? "Still a tie!" : "It's a tie!"} 😱</div>${pics(ents, "small")}
+      <button class="btn stage-act" data-a="runoff">⚡ Start tie-breaker vote</button>
+      <p class="meta">Guests vote on their phones between these ${ents.length} only.</p></div>`;
+  } else {
+    const n = Object.values(rvotes).filter((v) => o.keys.includes(v.pick)).length;
+    body = `<div style="text-align:center"><div class="award" style="font-size:clamp(26px,3.4vw,60px);margin-bottom:2vh">⚡ Tie-breaker! Vote on your phones</div>${pics(ents, "small")}
+      <p class="live"><b>${n}</b> vote${n === 1 ? "" : "s"} in</p>
+      <button class="btn stage-act" data-a="stoprunoff">🔒 Stop voting &amp; reveal</button></div>`;
+  }
+  st.innerHTML = `${head}<div class="reveal">${body}</div>${ctl}`;
 }
-function stageGo(a) {
-  if (a === "next" && slide < P.categories.length) { slide++; renderStage(); }
-  else if (a === "prev" && slide > 0) { slide--; renderStage(); }
-  else if (a === "close") { clearTimeout(slideTimer); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); }
+async function host(open_, extra, errEl) {
+  try { await store.hostSet(hostPin, open_, extra); return true; }
+  catch (err) { console.error(err); alertStage("That didn't go through. Check the connection and try again."); return false; }
+}
+function alertStage(text) { const m = document.createElement("div"); m.className = "notice err"; m.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60"; m.textContent = text; document.body.append(m); setTimeout(() => m.remove(), 4000); }
+async function stageGo(a) {
+  const c = P.categories[slide];
+  if (a === "next") {
+    if (slide >= P.categories.length) return;
+    if (phase === "drum") phase = "show"; else { slide++; phase = "drum"; }
+  } else if (a === "prev") {
+    if (phase === "show") phase = "drum"; else if (slide > 0) { slide--; phase = "show"; }
+  } else if (a === "close") {
+    $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); return;
+  } else if (a === "runoff") {
+    const o = outcome(c);
+    await host(false, { runoff: { cat: c.id, candidates: o.keys, round: `${c.id}-${Date.now()}`, open: true, stillTied: [] } });
+  } else if (a === "stoprunoff") {
+    const t = {};
+    runoff.candidates.forEach((k) => (t[k] = 0));
+    Object.values(rvotes).forEach((v) => { if (v.pick in t) t[v.pick]++; });
+    const top = Math.max(...Object.values(t));
+    const tied = Object.keys(t).filter((k) => t[k] === top);
+    if (tied.length === 1) {
+      if (await host(false, { runoff: { ...runoff, open: false }, decided: { [c.id]: tied[0] } })) phase = "drum"; // drumroll again, then reveal
+    } else await host(false, { runoff: { ...runoff, open: false, stillTied: tied } });
+  }
+  drawStage();
 }
 $("announceBtn").addEventListener("click", () => {
-  slide = 0; $("stage").classList.remove("hidden"); renderStage();
+  slide = 0; phase = "drum"; $("stage").classList.remove("hidden"); drawStage();
   document.documentElement.requestFullscreen?.().catch(() => {});
 });
 $("stage").addEventListener("click", (e) => { const a = e.target.closest("[data-a]")?.dataset.a; if (a) stageGo(a); });
@@ -814,6 +1032,9 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); stageGo("next"); }
   else if (e.key === "ArrowLeft" || e.key === "PageUp") stageGo("prev");
   else if (e.key === "Escape") stageGo("close");
+});
+$("resetTies").addEventListener("click", async () => {
+  if (await host(open, { runoff: null, decided: {}, resetDecided: true })) msg("toggleMsg", "ok", "Tie-breaker results cleared.");
 });
 $("pinForm").addEventListener("submit", async (e) => {
   e.preventDefault();
