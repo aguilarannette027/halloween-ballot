@@ -360,8 +360,9 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
       <label for="costume">Your character</label>
       <input id="costume" type="text" maxlength="60" placeholder="e.g. Victorian vampire" required>
       <label for="squad">Squad name <span class="muted small">(only if you're in a group or duo costume)</span></label>
-      <input id="squad" type="text" maxlength="40" placeholder="e.g. The Addams Family">
-      <p class="small muted" style="margin:6px 0 0">Everyone in the squad should type the same squad name.</p>
+      <input id="squad" type="text" maxlength="40" placeholder="e.g. The Addams Family" autocomplete="off">
+      <div class="suggest" id="squadSug"></div>
+      <p class="small muted" style="margin:6px 0 0">If your squad already registered, tap its name when it pops up so you're grouped together.</p>
       <button class="btn" type="submit" id="joinBtn">Join the haunt 🎃</button>
       <div id="joinMsg"></div>
     </form>
@@ -686,10 +687,19 @@ $("joinForm").addEventListener("submit", async (e) => {
   if (!$("costume").value.trim()) return msg("joinMsg", "err", "Tell us your character.");
   if (guests[key]) return msg("joinMsg", "err", `"${guests[key].name}" is already registered. If that's someone else, add a last initial (e.g. "${name} K").`);
   if (!photo) return msg("joinMsg", "err", "Add a costume photo so you can be shown if you win.");
-  const squad = $("squad").value.trim();
+  let squad = $("squad").value.trim();
+  // Catch near-misses ("Herculiz" vs "Hercules") before creating a separate squad.
+  if (squad && !squads()[squadKeyOf(squad)]) {
+    const near = similarSquads(squad)[0];
+    if (near && squadPrompted !== squad) {
+      squadPrompted = squad;
+      showSquadSug();
+      return msg("joinMsg", "err", `Did you mean the "${near[1].name}" squad? Tap it above to join them, or press Join again to start a new squad called "${squad}".`);
+    }
+  } else if (squad) squad = squads()[squadKeyOf(squad)].name; // use the squad's original spelling
   $("joinBtn").disabled = true;
   try {
-    await store.joinGuest(key, { name, costume: $("costume").value.trim(), squad, squadKey: squad ? keyOf(squad) : "", photo });
+    await store.joinGuest(key, { name, costume: $("costume").value.trim(), squad, squadKey: squad ? squadKeyOf(squad) : "", photo });
     guests[key] ||= { name, costume: $("costume").value.trim(), squad, photo };
     if (!mine.includes(key)) { mine.push(key); LS.set("hb-mine", JSON.stringify(mine)); }
     lastReg = key;
@@ -699,10 +709,44 @@ $("joinForm").addEventListener("submit", async (e) => {
   } catch (err) { console.error(err); msg("joinMsg", "err", "The spirits are restless. Check your connection and try again."); }
   $("joinBtn").disabled = false;
 });
+// Squad names are matched ignoring capitals, spaces, punctuation and a leading "The".
+function squadKeyOf(name) { return name.toLowerCase().replace(/^the\s+/, "").replace(/[^a-z0-9]/g, "").slice(0, 40); }
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+// Existing squads that look like what was typed: same start, or only a typo or two away.
+function similarSquads(typed) {
+  const t = squadKeyOf(typed);
+  if (!t) return [];
+  return Object.entries(squads())
+    .map(([k, sq]) => [k, sq, k.startsWith(t) || t.startsWith(k) ? 0 : editDistance(t, k)])
+    .filter(([k, , dist]) => k.includes(t) || dist <= Math.max(1, Math.floor(Math.max(t.length, k.length) / 4)))
+    .sort((a, b) => a[2] - b[2]);
+}
+let squadPrompted = "";
+function showSquadSug() {
+  const typed = $("squad").value.trim();
+  const exact = squads()[squadKeyOf(typed)];
+  const list = typed ? similarSquads(typed) : [];
+  $("squadSug").innerHTML = list.map(([k, sq]) => `<button type="button" data-squad="${esc(sq.name)}" class="${exact && squadKeyOf(sq.name) === squadKeyOf(typed) ? "on" : ""}">
+      ${avatar(sq.members.find((m) => m.photo)?.photo, "mini")}<span>Join <b>${esc(sq.name)}</b> <span class="muted">· ${esc(sq.members.map((m) => m.name).join(", "))}</span></span></button>`).join("");
+}
+$("squad").addEventListener("input", () => { squadPrompted = ""; showSquadSug(); });
+$("squadSug").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-squad]");
+  if (!b) return;
+  $("squad").value = b.dataset.squad; showSquadSug(); $("joinMsg").innerHTML = "";
+});
+
 $("regAnother").addEventListener("click", () => {
   lastReg = null;
   photo = ""; $("photoPreview").innerHTML = "<span>🎃</span>";
   ["name", "costume", "squad"].forEach((id) => ($(id).value = ""));
+  $("squadSug").innerHTML = ""; squadPrompted = "";
   show("register"); scrollTo(0, 0);
 });
 
@@ -799,7 +843,8 @@ function renderBallot() {
         : `<input type="text" class="finder" data-for="${esc(c.id)}" autocomplete="off" placeholder="${c.group ? "⌨️ Type a squad name…" : "⌨️ Type a guest's name or character…"}">
            <div class="suggest" data-sug="${esc(c.id)}"></div>
            <select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "…or choose a squad" : "…or choose from the list"}</option>${c.group ? squadOpts : opts}</select>
-           <textarea name="c_${esc(c.id)}" maxlength="140" rows="1" placeholder="💬 Optional: share why you love their costume!"></textarea>`}
+           <label class="small" style="margin:12px 0 0">💬 Comment <span class="muted">(optional)</span></label>
+           <textarea name="c_${esc(c.id)}" maxlength="140" rows="1" placeholder="Share why you love their costume! (optional)"></textarea>`}
     </div>`).join("");
   document.querySelectorAll("#cats select, #cats textarea").forEach((s) => { if (keep[s.name]) s.value = keep[s.name]; });
   document.querySelectorAll("#cats select").forEach(syncFinder);
@@ -994,7 +1039,13 @@ function drawStage() {
 }
 async function host(open_, extra, errEl) {
   try { await store.hostSet(hostPin, open_, extra); return true; }
-  catch (err) { console.error(err); alertStage("That didn't go through. Check the connection and try again."); return false; }
+  catch (err) {
+    console.error(err);
+    alertStage(err.message === "wrong_pin"
+      ? "The database refused this. Make sure the latest firestore.rules are published in Firebase, then try again."
+      : "That didn't go through. Check the connection and try again.");
+    return false;
+  }
 }
 function alertStage(text) { const m = document.createElement("div"); m.className = "notice err"; m.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60"; m.textContent = text; document.body.append(m); setTimeout(() => m.remove(), 4000); }
 async function stageGo(a) {
