@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Halloween Costume Vote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script>
+/* ==========================================================================
+   PARTY SETTINGS: edit these to fit your party
+   ========================================================================== */
+window.PARTY = {
+  title: "The Haunted Ballot",
+  subtitle: "Halloween Party 2026",
+  // Host PIN used only in demo mode. On the live site the real PIN lives in the
+  // Firebase rules (firestore.rules), so it never appears in this page.
+  demoPin: "1031",
+  // Each category gets one vote per guest. Keep ids short, lowercase, unique.
+  // group: true means guests vote for a squad (group or duo) instead of a person.
+  categories: [
+    { id: "best", name: "Best Dressed to Distress", icon: "👑", blurb: "Best overall Halloween costume",
+      criteria: ["Visual impact: stands out at first glance", "Attention to detail: costume, makeup and accessories work together", "Character portrayal: brings the look to life through poses and attitude"] },
+    { id: "scary", name: "Nightmare Fuel Award", icon: "👻", blurb: "Scariest costume of the night",
+      criteria: ["Fear factor: gives guests the chills", "Creepy details: effective makeup, props or unsettling touches", "Spooky performance: expressions, movements or sounds that scare"] },
+    { id: "creative", name: "Wickedly Creative Award", icon: "🎨", blurb: "Most original or imaginative costume",
+      criteria: ["Originality: a fresh or unexpected idea", "Resourcefulness: uses materials or everyday items imaginatively", "Execution: makes the creative concept clear and convincing"] },
+    { id: "funny", name: "Laugh Till You Drop Dead Award", icon: "😂", blurb: "Funniest Halloween costume",
+      criteria: ["Humor: gets the biggest laughs", "Cleverness: a witty concept, pun or playful twist", "Comic delivery: funny gestures, expressions or interactions"] },
+    { id: "squad", name: "Squad Ghouls Award", icon: "🧛", blurb: "Best coordinated group or duo costume", group: true,
+      criteria: ["Theme cohesion: everyone clearly fits the shared concept", "Group creativity: an imaginative take on the theme", "Team performance: members interact and bring the theme to life together"] }
+  ],
+  // Paste your Firebase web config here (see SETUP.md). While it is empty the
+  // site runs in DEMO MODE: votes are kept only on this one device.
+  firebaseConfig: {
+    apiKey: "AIzaSyADpLliHlUjAmusp7BuI4xYKWRotpPZQb0",
+    authDomain: "halloween-ballot.firebaseapp.com",
+    projectId: "halloween-ballot",
+    appId: "1:170998977858:web:918e09af7f3e0a8ef964db"
+  }
+};
+</script>
+
+<style>
+:root {
+  --bg: #0b0710;
+  --bg-2: #160d1f;
+  --card: rgba(30, 18, 42, 0.82);
+  --card-border: rgba(255, 140, 26, 0.22);
+  --text: #f4ecdf;
+  --muted: #b7a7c4;
+  --orange: #ff8c1a;
+  --orange-2: #ffb347;
+  --purple: #9b5de5;
+  --green: #7cff6b;
+  --blood: #d7263d;
+  --radius: 16px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #2a1640 0%, var(--bg-2) 35%, var(--bg) 75%);
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+h1, h2, .spooky { font-family: Creepster, "Chiller", fantasy; font-weight: 400; letter-spacing: 0.04em; }
+
+/* ---------- atmosphere ---------- */
+.moon {
+  position: fixed; top: 28px; right: 7vw; width: 90px; height: 90px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff8d6, #f5d77a 60%, #d9a93c);
+  box-shadow: 0 0 60px 20px rgba(245, 215, 122, 0.25);
+  z-index: 0; pointer-events: none;
+}
+.fog {
+  position: fixed; left: -50%; bottom: -40px; width: 200%; height: 220px; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(200, 180, 230, 0.12), transparent 60%);
+  filter: blur(18px); animation: drift 30s linear infinite;
+}
+.fog.two { bottom: 40px; opacity: 0.6; animation-duration: 45s; animation-direction: reverse; }
+@keyframes drift { from { transform: translateX(0); } to { transform: translateX(25%); } }
+.floaty { position: fixed; z-index: 0; pointer-events: none; font-size: 28px; opacity: 0.7; animation: flap 9s ease-in-out infinite; }
+@keyframes flap {
+  0%, 100% { transform: translate(0, 0) rotate(-6deg); }
+  50% { transform: translate(40px, -25px) rotate(6deg); }
+}
+.ghost { animation: haunt 7s ease-in-out infinite; }
+@keyframes haunt { 0%, 100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(-18px); opacity: 0.8; } }
+
+/* ---------- layout ---------- */
+.wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
+header.hero { text-align: center; padding: 32px 0 12px; }
+header.hero h1 {
+  font-size: clamp(44px, 12vw, 76px); margin: 0; line-height: 1;
+  color: var(--orange);
+  text-shadow: 0 0 18px rgba(255, 140, 26, 0.55), 0 4px 0 #5a1d00;
+}
+header.hero p { margin: 8px 0 0; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; font-size: 13px; }
+nav.tabs { display: flex; gap: 8px; justify-content: center; margin: 22px 0 8px; flex-wrap: wrap; }
+nav.tabs button {
+  background: transparent; border: 1px solid var(--card-border); color: var(--muted);
+  padding: 8px 16px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 14px;
+}
+nav.tabs button.on { background: var(--orange); color: #1a0d00; border-color: var(--orange); font-weight: 700; }
+
+.card {
+  background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+  padding: 22px; margin: 18px 0; backdrop-filter: blur(6px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.card h2 { margin: 0 0 6px; font-size: 32px; color: var(--orange-2); }
+.card h3 { margin: 0; font-size: 18px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+label { display: block; font-weight: 600; margin: 14px 0 6px; }
+input[type=text], input[type=password], select {
+  width: 100%; padding: 13px 14px; border-radius: 12px; font: inherit; font-size: 16px;
+  background: #0f0916; color: var(--text); border: 1px solid #3a2850; outline: none;
+}
+input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255, 140, 26, 0.25); }
+.btn {
+  display: inline-block; width: 100%; margin-top: 18px; padding: 14px 18px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #1a0d00;
+  font: inherit; font-weight: 700; font-size: 17px; cursor: pointer;
+  box-shadow: 0 6px 0 #8a3b00, 0 0 24px rgba(255, 140, 26, 0.35);
+  transition: transform 0.08s;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #8a3b00; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.ghosty { background: transparent; color: var(--orange-2); border: 1px solid var(--card-border); box-shadow: none; }
+
+.cat { border-top: 1px dashed #3a2850; padding-top: 16px; margin-top: 16px; }
+.cat:first-of-type { border-top: 0; margin-top: 4px; padding-top: 4px; }
+.cat-head { display: flex; gap: 12px; align-items: center; }
+.cat-icon { font-size: 30px; }
+.cat .blurb { margin: 0; font-size: 13px; color: var(--muted); }
+.cat select { margin-top: 10px; }
+
+.notice { padding: 12px 14px; border-radius: 12px; margin-top: 14px; font-size: 14px; }
+.notice.err { background: rgba(215, 38, 61, 0.15); border: 1px solid rgba(215, 38, 61, 0.5); color: #ffb3bd; }
+.notice.ok { background: rgba(124, 255, 107, 0.1); border: 1px solid rgba(124, 255, 107, 0.4); color: #c9ffc2; }
+.notice.demo { background: rgba(155, 93, 229, 0.15); border: 1px solid rgba(155, 93, 229, 0.5); color: #e2cdff; }
+
+.stats { display: flex; gap: 12px; margin-top: 10px; }
+.stat { flex: 1; text-align: center; background: #0f0916; border-radius: 12px; padding: 12px 6px; border: 1px solid #2c1f3d; }
+.stat b { display: block; font-size: 28px; color: var(--orange-2); font-family: Creepster, fantasy; font-weight: 400; }
+
+.result { margin-top: 18px; }
+.winner {
+  display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px;
+  background: linear-gradient(90deg, rgba(255, 140, 26, 0.22), rgba(155, 93, 229, 0.12));
+  border: 1px solid rgba(255, 140, 26, 0.45); margin: 10px 0;
+}
+.winner .crown { font-size: 34px; }
+.winner .name { font-family: Creepster, fantasy; font-size: 30px; color: var(--orange-2); line-height: 1.05; }
+.row { display: grid; grid-template-columns: minmax(80px, 38%) 1fr auto; gap: 10px; align-items: center; margin: 6px 0; font-size: 14px; }
+.row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar { height: 10px; border-radius: 99px; background: #241634; overflow: hidden; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--purple), var(--orange)); border-radius: 99px; }
+.tie { font-size: 12px; color: var(--muted); }
+
+.guest-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { background: #1d1229; border: 1px solid #3a2850; padding: 6px 10px; border-radius: 99px; font-size: 13px; }
+.chip.voted { border-color: rgba(124, 255, 107, 0.5); }
+
+.share { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+#qr { background: #fff; padding: 10px; border-radius: 12px; line-height: 0; }
+#qr img, #qr canvas { width: 150px; height: 150px; }
+.link { word-break: break-all; font-size: 14px; color: var(--orange-2); }
+
+.photo-pick { display: flex; gap: 16px; align-items: center; }
+.photo-preview {
+  width: 120px; height: 120px; flex: none; border-radius: 50%; overflow: hidden;
+  display: grid; place-items: center; font-size: 48px;
+  background: #0f0916; border: 2px dashed #5a3d7a;
+}
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-btns { flex: 1; min-width: 0; }
+.photo-btns .btn { margin-top: 0; margin-bottom: 10px; text-align: center; }
+.small-btn { padding: 11px 12px; font-size: 15px; font-weight: 700; display: block; }
+.criteria { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+.criteria li { margin: 2px 0; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none; border: 2px solid var(--orange); background: #0f0916; display: grid; place-items: center; font-size: 30px; }
+.row .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.row .who img, .row .who .mini { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; background: #0f0916; display: grid; place-items: center; font-size: 13px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+
+/* ---------- winner announcement (projector mode) ---------- */
+#stage {
+  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 16px; text-align: center;
+  background: radial-gradient(ellipse at center, #2a1640 0%, #0b0710 70%);
+}
+#stage .award { font-family: Creepster, fantasy; color: var(--orange); font-size: clamp(34px, 7vw, 72px); line-height: 1; text-shadow: 0 0 24px rgba(255, 140, 26, 0.6); }
+#stage .award-blurb { color: var(--muted); margin: 8px 0 20px; }
+#stage .drum { font-size: 90px; animation: shake 0.5s infinite; }
+@keyframes shake { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+#stage .winners { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+#stage .w { animation: rise 0.9s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes rise { from { transform: scale(0.3) translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
+#stage .w img, #stage .w .ph {
+  width: min(52vw, 300px); height: min(52vw, 300px); border-radius: 50%; object-fit: cover;
+  border: 6px solid var(--orange); box-shadow: 0 0 60px rgba(255, 140, 26, 0.6); background: #0f0916;
+  display: grid; place-items: center; font-size: 100px;
+}
+#stage .squad-pics { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 760px; }
+#stage .squad-pics img, #stage .squad-pics .ph { width: min(30vw, 170px); height: min(30vw, 170px); border-width: 4px; font-size: 60px; }
+#stage .w .wn { font-family: Creepster, fantasy; font-size: clamp(32px, 6vw, 56px); color: var(--orange-2); margin-top: 14px; line-height: 1.05; }
+#stage .w .wc { color: var(--text); font-size: 18px; }
+#stage .meta { color: var(--muted); margin-top: 10px; font-size: 14px; }
+#stage .controls { display: flex; gap: 10px; margin-top: 26px; width: min(100%, 460px); }
+#stage .controls .btn { margin-top: 0; }
+
+.host-ctl { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 14px; border-radius: 12px; background: #0f0916; border: 1px solid #2c1f3d; }
+.host-ctl .btn { margin-top: 0; width: auto; flex: 1; }
+#openState { font-size: 30px; line-height: 1; }
+#openState.open { color: var(--green); }
+#openState.closed { color: var(--blood); }
+.btn.danger { background: linear-gradient(180deg, #ff5a6e, var(--blood)); color: #fff; box-shadow: 0 6px 0 #6b0f1c; }
+
+.hidden { display: none !important; }
+.big-emoji { font-size: 72px; text-align: center; margin: 4px 0; }
+footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fog, .floaty, .ghost { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="moon"></div>
+<div class="fog"></div><div class="fog two"></div>
+<div class="floaty" style="top:110px;left:6vw">🦇</div>
+<div class="floaty" style="top:200px;right:18vw;animation-delay:-3s">🦇</div>
+<div class="floaty ghost" style="top:55vh;left:3vw">👻</div>
+<div class="floaty ghost" style="top:75vh;right:4vw;animation-delay:-2s">🎃</div>
+
+<div class="wrap">
+  <header class="hero">
+    <h1 id="title">The Haunted Ballot</h1>
+    <p id="subtitle">Halloween Party</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-view="join" class="on">🕯️ Vote</button>
+    <button data-view="results">🏆 Results</button>
+    <button data-view="share">🔗 Invite</button>
+  </nav>
+
+  <div id="demoNote" class="notice demo hidden">
+    <b>Demo mode.</b> Votes are only saved on this device. Add your Firebase settings (see SETUP.md) so every guest's phone shares the same ballot box.
+  </div>
+
+  <!-- STEP 1: who are you -->
+  <section id="view-join" class="card">
+    <h2>Register if you dare…</h2>
+    <p class="muted">Tell the spirits who you are. Your photo and character go on the ballot, and your photo appears on the big screen if you win. Kids without a phone can register on a parent's phone.</p>
+    <form id="joinForm" autocomplete="off">
+      <label>Your costume photo</label>
+      <div class="photo-pick">
+        <div class="photo-preview" id="photoPreview"><span>🎃</span></div>
+        <div class="photo-btns">
+          <label class="btn small-btn" for="photoCam">📸 Take a photo</label>
+          <label class="btn ghosty small-btn" for="photoFile">🖼️ Upload a photo</label>
+          <input id="photoCam" type="file" accept="image/*" capture="user" class="hidden">
+          <input id="photoFile" type="file" accept="image/*" class="hidden">
+        </div>
+      </div>
+      <label for="name">Your name <span class="muted small">(kids can use their character's name)</span></label>
+      <input id="name" type="text" maxlength="40" placeholder="e.g. Annette" required>
+      <label for="costume">Your character</label>
+      <input id="costume" type="text" maxlength="60" placeholder="e.g. Victorian vampire" required>
+      <label for="squad">Squad name <span class="muted small">(only if you're in a group or duo costume)</span></label>
+      <input id="squad" type="text" maxlength="40" placeholder="e.g. The Addams Family">
+      <p class="small muted" style="margin:6px 0 0">Everyone in the squad should type the same squad name.</p>
+      <button class="btn" type="submit" id="joinBtn">Summon my ballot 🎃</button>
+      <div id="joinMsg"></div>
+    </form>
+  </section>
+
+  <!-- STEP 2: ballot -->
+  <section id="view-vote" class="card hidden">
+    <h2>Cast your spell</h2>
+    <p class="muted">Voting as <b id="voterName"></b>. Pick one guest per category. You can't vote for yourself, and you can change your votes until the host closes voting. 🕸️</p>
+    <p class="small muted">Don't see someone? They haven't joined yet. The list updates live.</p>
+    <form id="voteForm"><div id="cats"></div>
+      <button class="btn" type="submit" id="voteBtn">Seal my votes in blood 🩸</button>
+      <div id="voteMsg"></div>
+    </form>
+    <button class="btn ghosty" id="notMe" type="button">Not you? Switch person</button>
+  </section>
+
+  <!-- STEP 3: thank you -->
+  <section id="view-done" class="card hidden">
+    <div class="big-emoji">⚰️</div>
+    <h2 style="text-align:center" id="doneTitle">Your votes are sealed</h2>
+    <p class="muted" style="text-align:center" id="doneText">The spirits have recorded your choices. Results will be revealed by the host at the stroke of… whenever they feel like it.</p>
+    <button class="btn ghosty" id="changeBtn" type="button">✏️ Change my votes</button>
+    <button class="btn" id="nextBtn" type="button">👻 Next person on this phone</button>
+    <p class="small muted" style="text-align:center">Sharing a phone with kids or family? Tap above so the next person can register and vote.</p>
+    <div class="stats">
+      <div class="stat"><b id="dGuests">0</b><span class="small muted">souls joined</span></div>
+      <div class="stat"><b id="dVotes">0</b><span class="small muted">ballots cast</span></div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="view-results" class="card hidden">
+    <h2>The verdict</h2>
+    <div class="stats">
+      <div class="stat"><b id="rGuests">0</b><span class="small muted">souls joined</span></div>
+      <div class="stat"><b id="rVotes">0</b><span class="small muted">ballots cast</span></div>
+    </div>
+    <div id="pinGate">
+      <p class="muted" style="margin-top:16px">Only the host may unveil the winners.</p>
+      <form id="pinForm">
+        <label for="pin">Host PIN</label>
+        <input id="pin" type="password" inputmode="numeric" placeholder="••••">
+        <button class="btn" type="submit">Reveal 🔮</button>
+        <div id="pinMsg"></div>
+      </form>
+    </div>
+    <div id="resultsBody" class="hidden">
+      <div class="host-ctl">
+        <div><div class="small muted">Voting is</div><div id="openState" class="spooky"></div></div>
+        <button class="btn" id="toggleBtn" type="button"></button>
+      </div>
+      <div id="toggleMsg"></div>
+      <button class="btn" id="announceBtn" type="button">🎬 Announce the winners (full screen)</button>
+      <p class="small muted">Put this on a TV or projector. It reveals one award at a time with a drumroll and the winner's photo.</p>
+      <div id="results"></div>
+      <h3 style="margin-top:24px">Guests</h3>
+      <p class="small muted">Green outline = has voted.</p>
+      <div class="guest-list" id="guestList"></div>
+    </div>
+  </section>
+
+  <!-- SHARE -->
+  <section id="view-share" class="card hidden">
+    <h2>Invite the living</h2>
+    <p class="muted">Guests scan this code with their phone camera to open the ballot. No sign-up needed.</p>
+    <div class="share">
+      <div id="qr"></div>
+      <div style="flex:1;min-width:200px">
+        <div class="small muted">Party link</div>
+        <div class="link" id="shareLink"></div>
+        <button class="btn ghosty" id="copyBtn" type="button">Copy link</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>🕷️ Made for a night of frights 🕷️</footer>
+</div>
+
+<div id="stage" class="hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+const P = window.PARTY;
+const $ = (id) => document.getElementById(id);
+const keyOf = (s) => s.trim().toLowerCase().replace(/\s+/g, " ").replace(/[\/.#$\[\]]/g, "").slice(0, 40);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const LS = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+
+$("title").textContent = P.title;
+$("subtitle").textContent = P.subtitle;
+document.title = P.title;
+
+/* ---------- storage backends ---------- */
+// Both backends expose: onGuests(cb), onVotes(cb), onOpen(cb), joinGuest(key, data),
+// saveVote(key, data) and hostSet(pin, open). Any phone can register and vote for several
+// people (kids share a parent's phone). saveVote rejects with Error("closed"), hostSet with Error("wrong_pin").
+
+function demoStore() {
+  const K = "haunted-ballot-demo";
+  const blank = () => ({ guests: {}, votes: {}, open: true });
+  const load = () => { try { return { ...blank(), ...JSON.parse(LS.get(K)) }; } catch { return blank(); } };
+  const save = (d) => { LS.set(K, JSON.stringify(d)); fire(); };
+  const subs = { guests: [], votes: [], open: [] };
+  const fire = () => { const d = load(); subs.guests.forEach((f) => f(d.guests)); subs.votes.forEach((f) => f(d.votes)); subs.open.forEach((f) => f(d.open)); };
+  window.addEventListener("storage", (e) => { if (e.key === K) fire(); });
+  return {
+    onGuests(cb) { subs.guests.push(cb); cb(load().guests); },
+    onVotes(cb) { subs.votes.push(cb); cb(load().votes); },
+    onOpen(cb) { subs.open.push(cb); cb(load().open); },
+    async joinGuest(key, data) { const d = load(); if (!d.guests[key]) { d.guests[key] = data; save(d); } },
+    async saveVote(key, data) { const d = load(); if (!d.open) throw new Error("closed"); d.votes[key] = data; save(d); },
+    async hostSet(pin, open) { if (pin !== P.demoPin) throw new Error("wrong_pin"); const d = load(); d.open = open; save(d); }
+  };
+}
+
+async function firebaseStore(cfg) {
+  const v = "10.12.2";
+  const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`);
+  const fs = await import(`https://www.gstatic.com/firebasejs/${v}/firebase-firestore.js`);
+  const db = fs.getFirestore(initializeApp(cfg));
+  const asMap = (snap) => { const m = {}; snap.forEach((d) => (m[d.id] = d.data())); return m; };
+  let open = true;
+  return {
+    onGuests(cb) { fs.onSnapshot(fs.collection(db, "guests"), (s) => cb(asMap(s))); },
+    onVotes(cb) { fs.onSnapshot(fs.collection(db, "votes"), (s) => cb(asMap(s))); },
+    onOpen(cb) { fs.onSnapshot(fs.doc(db, "public", "state"), (s) => cb((open = !s.exists() || s.data().open !== false))); },
+    async joinGuest(key, data) {
+      const ref = fs.doc(db, "guests", key);
+      if ((await fs.getDoc(ref)).exists()) return; // already registered, keep their original photo
+      await fs.setDoc(ref, { ...data, at: fs.serverTimestamp() });
+    },
+    async saveVote(key, data) {
+      try { await fs.setDoc(fs.doc(db, "votes", key), { ...data, at: fs.serverTimestamp() }); }
+      catch (e) { if (e.code === "permission-denied" && !open) throw new Error("closed"); throw e; }
+    },
+    // The PIN is checked by the database rules (it never appears in this page), so a wrong PIN fails the write.
+    async hostSet(pin, open) {
+      const b = fs.writeBatch(db);
+      b.set(fs.doc(db, "control", "state"), { pin, open });
+      b.set(fs.doc(db, "public", "state"), { open });
+      try { await b.commit(); }
+      catch (e) { if (e.code === "permission-denied") throw new Error("wrong_pin"); throw e; }
+    }
+  };
+}
+
+const live = !!(P.firebaseConfig && P.firebaseConfig.apiKey && P.firebaseConfig.projectId);
+let store;
+try { store = live ? await firebaseStore(P.firebaseConfig) : demoStore(); }
+catch (e) {
+  console.error(e);
+  store = demoStore();
+  $("demoNote").innerHTML = "<b>Can't reach the ballot box.</b> Check your internet connection and reload the page.";
+  $("demoNote").classList.remove("hidden");
+}
+if (!live) $("demoNote").classList.remove("hidden");
+
+/* ---------- state ---------- */
+let guests = {}, votes = {}, open = true;
+let me = LS.get("hb-me"); // guest key on this device
+let hostPin = LS.get("hb-pin") || ""; // saved only after the database accepted it
+let pinOk = !!hostPin;
+let editing = false;
+let view = "join";
+
+store.onGuests((g) => { guests = g; renderBallot(); renderResults(); });
+store.onVotes((v) => { votes = v; renderResults(); if (view === "join") show("join"); });
+store.onOpen((o) => { open = o; if (!o) editing = false; renderResults(); if (view === "join") show("join"); });
+
+/* ---------- navigation ---------- */
+function show(name) {
+  view = name;
+  document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
+  let section = name;
+  if (name === "join") section = !me ? "join" : !open || (votes[me] && !editing) ? "done" : "vote";
+  ["join", "vote", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  if (section === "vote") renderBallot();
+  if (section === "done") renderDone();
+}
+function renderDone() {
+  const voted = !!votes[me];
+  $("doneTitle").textContent = open ? "Your votes are sealed" : "Voting is closed";
+  $("doneText").textContent = open
+    ? "The spirits have recorded your choices. You can still change them until the host closes voting."
+    : voted ? "The crypt is sealed and your votes are locked in. Stay tuned for the winners!" : "The host has closed voting. Stay tuned for the winners!";
+  $("changeBtn").classList.toggle("hidden", !open || !voted);
+}
+$("changeBtn").addEventListener("click", () => { editing = true; show("join"); });
+document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
+
+/* ---------- join ---------- */
+let photo = ""; // compressed JPEG data URL, small enough to live inside the guest record
+
+// Shrink the photo to a square-ish 480px JPEG (~40KB) so it loads fast on every phone.
+function shrinkPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 480, s = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = () => reject(new Error("bad_image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+["photoCam", "photoFile"].forEach((id) => $(id).addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    photo = await shrinkPhoto(file);
+    $("photoPreview").innerHTML = `<img alt="Your photo" src="${photo}">`;
+    $("joinMsg").innerHTML = "";
+  } catch { msg("joinMsg", "err", "That photo couldn't be read. Try another one."); }
+  e.target.value = "";
+}));
+
+$("joinForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("name").value.trim();
+  const key = keyOf(name);
+  if (key.length < 2) return msg("joinMsg", "err", "Please enter your name.");
+  if (!$("costume").value.trim()) return msg("joinMsg", "err", "Tell us your character.");
+  if (!photo && !guests[key]) return msg("joinMsg", "err", "Add a costume photo so you can be shown if you win.");
+  const squad = $("squad").value.trim();
+  $("joinBtn").disabled = true;
+  try {
+    await store.joinGuest(key, { name, costume: $("costume").value.trim(), squad, squadKey: squad ? keyOf(squad) : "", photo });
+    me = key; LS.set("hb-me", key);
+    $("joinMsg").innerHTML = "";
+    show("join");
+  } catch (err) { console.error(err); msg("joinMsg", "err", "The spirits are restless. Check your connection and try again."); }
+  $("joinBtn").disabled = false;
+});
+function nextVoter() {
+  me = null; editing = false; LS.del("hb-me");
+  photo = ""; $("photoPreview").innerHTML = "<span>🎃</span>";
+  ["name", "costume", "squad"].forEach((id) => ($(id).value = ""));
+  show("join"); scrollTo(0, 0);
+}
+$("notMe").addEventListener("click", nextVoter);
+$("nextBtn").addEventListener("click", nextVoter);
+
+/* ---------- ballot ---------- */
+function renderBallot() {
+  if (!me) return;
+  $("voterName").textContent = guests[me]?.name || me;
+  const others = Object.entries(guests).filter(([k]) => k !== me).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const opts = others.map(([k, g]) => `<option value="${esc(k)}">${esc(g.name)}${g.costume ? " · " + esc(g.costume) : ""}</option>`).join("");
+  const mySquad = guests[me]?.squadKey;
+  const squadOpts = Object.entries(squads()).filter(([k]) => k !== mySquad).sort((a, b) => a[1].name.localeCompare(b[1].name))
+    .map(([k, s]) => `<option value="${esc(k)}">${esc(s.name)} · ${esc(s.members.map((m) => m.name).join(", "))}</option>`).join("");
+  // Keep what's picked on screen; otherwise start from this guest's saved votes.
+  const keep = { ...(votes[me]?.picks || {}) };
+  if ($("cats").dataset.voter === me) document.querySelectorAll("#cats select").forEach((s) => (keep[s.name] = s.value));
+  $("cats").dataset.voter = me;
+  $("cats").innerHTML = P.categories.map((c) => `
+    <div class="cat">
+      <div class="cat-head"><div class="cat-icon">${c.icon}</div><div><h3>${esc(c.name)}</h3><p class="blurb">${esc(c.blurb || "")}</p></div></div>
+      ${c.criteria ? `<ul class="criteria">${c.criteria.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${c.group && !squadOpts
+        ? `<p class="small muted" style="margin-top:10px">No squads have registered yet. Groups appear here once their members type a squad name.</p>`
+        : `<select name="${esc(c.id)}" ${c.group ? "" : "required"}><option value="">${c.group ? "Choose a squad…" : "Choose a guest…"}</option>${c.group ? squadOpts : opts}</select>`}
+    </div>`).join("");
+  document.querySelectorAll("#cats select").forEach((s) => { if (keep[s.name]) s.value = keep[s.name]; });
+  $("voteBtn").disabled = others.length === 0;
+  $("voteBtn").textContent = votes[me] ? "Update my votes 🩸" : "Seal my votes in blood 🩸";
+  if (!others.length) msg("voteMsg", "demo", "No other guests have joined yet. Hang tight, the list fills in as people arrive.");
+  else if ($("voteMsg").firstChild?.classList?.contains("demo")) $("voteMsg").innerHTML = "";
+}
+
+$("voteForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const picks = {};
+  for (const s of document.querySelectorAll("#cats select")) {
+    if (!s.value && s.required) return msg("voteMsg", "err", "Pick someone in every category.");
+    if (s.value) picks[s.name] = s.value;
+  }
+  $("voteBtn").disabled = true;
+  try {
+    await store.saveVote(me, { voter: guests[me]?.name || me, picks });
+    editing = false;
+    $("voteMsg").innerHTML = "";
+    show("join");
+  } catch (err) {
+    if (err.message === "closed") { editing = false; show("join"); }
+    else { console.error(err); msg("voteMsg", "err", "Your vote didn't go through. Check your connection and try again."); }
+  }
+  $("voteBtn").disabled = false;
+});
+
+/* ---------- results ---------- */
+function renderResults() {
+  const nG = Object.keys(guests).length, nV = Object.keys(votes).length;
+  ["rGuests", "dGuests"].forEach((id) => ($(id).textContent = nG));
+  ["rVotes", "dVotes"].forEach((id) => ($(id).textContent = nV));
+  $("pinGate").classList.toggle("hidden", pinOk);
+  $("resultsBody").classList.toggle("hidden", !pinOk);
+  if (!pinOk) return;
+  $("openState").textContent = open ? "Open" : "Closed";
+  $("openState").className = "spooky " + (open ? "open" : "closed");
+  $("toggleBtn").textContent = open ? "🔒 Close voting" : "🔓 Reopen voting";
+  $("toggleBtn").classList.toggle("danger", open);
+  $("results").innerHTML = P.categories.map((c) => {
+    const { rows, top, winners } = tally(c);
+    if (!rows.length) return `<div class="result cat"><h3>${c.icon} ${esc(c.name)}</h3><p class="muted small">No votes yet.</p></div>`;
+    return `<div class="result cat">
+      <h3>${c.icon} ${esc(c.name)}</h3>
+      ${winners.map((w) => `<div class="winner">${avatar(w.photo, "avatar")}<div><div class="name">🏆 ${esc(w.name)}</div>
+        <div class="small muted">${esc(w.sub)} · ${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · it's a tie!" : ""}</div></div></div>`).join("")}
+      ${rows.slice(0, 5).map(([k, n]) => { const e = entity(c, k); return `<div class="row"><span class="who">${avatar(e.photo, "mini")}<span class="nm">${esc(e.name)}</span></span><span class="bar"><i style="width:${(n / top) * 100}%"></i></span><span>${n}</span></div>`; }).join("")}
+    </div>`;
+  }).join("");
+  $("guestList").innerHTML = Object.entries(guests).sort((a, b) => a[1].name.localeCompare(b[1].name))
+    .map(([k, g]) => `<span class="chip ${votes[k] ? "voted" : ""}">${g.photo ? `<img alt="" src="${esc(g.photo)}">` : ""}${esc(g.name)}</span>`).join("") || `<span class="muted small">Nobody yet.</span>`;
+}
+
+// Squads are built from the squad name guests typed when registering.
+function squads() {
+  const out = {};
+  Object.values(guests).forEach((g) => {
+    if (!g.squadKey) return;
+    (out[g.squadKey] ||= { name: g.squad, members: [] }).members.push(g);
+  });
+  return out;
+}
+// What a vote points at: a guest, or a squad for group awards.
+function entity(c, k) {
+  if (c.group) {
+    const s = squads()[k];
+    if (!s) return { name: k, sub: "", photo: "", photos: [] };
+    return { name: s.name, sub: s.members.map((m) => m.name).join(", "), photo: s.members.find((m) => m.photo)?.photo || "", photos: s.members.map((m) => m.photo) };
+  }
+  const g = guests[k] || { name: k };
+  return { name: g.name, sub: g.costume || "", photo: g.photo || "", photos: [g.photo] };
+}
+function tally(c) {
+  const t = {};
+  Object.values(votes).forEach((v) => { const k = v.picks?.[c.id]; if (k) t[k] = (t[k] || 0) + 1; });
+  const rows = Object.entries(t).sort((a, b) => b[1] - a[1]);
+  const top = rows[0]?.[1] || 0;
+  return { rows, top, winners: rows.filter((r) => r[1] === top).map((r) => entity(c, r[0])) };
+}
+function avatar(src, cls) {
+  return src ? `<img class="${cls}" alt="" src="${esc(src)}">` : `<span class="${cls}">🎃</span>`;
+}
+
+/* ---------- winner announcement ---------- */
+let slide = 0, slideTimer;
+function renderStage() {
+  clearTimeout(slideTimer);
+  const st = $("stage");
+  if (slide >= P.categories.length) {
+    st.innerHTML = `<div class="big-emoji">🎃🦇👻</div><div class="award">Happy Halloween!</div>
+      <p class="award-blurb">Thanks for haunting with us tonight.</p>
+      <div class="controls"><button class="btn ghosty" data-a="prev">◀ Back</button><button class="btn" data-a="close">Close</button></div>`;
+    return;
+  }
+  const c = P.categories[slide];
+  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide ? "" : "disabled"}>◀ Back</button><button class="btn" data-a="next">Next award ▶</button></div>
+    <button class="btn ghosty" data-a="close" style="width:auto;margin-top:12px;padding:8px 16px;font-size:14px">Exit</button>`;
+  st.innerHTML = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>
+    <div class="drum">🥁</div><p class="meta">And the winner is…</p>${ctl}`;
+  slideTimer = setTimeout(() => {
+    const { winners, top } = tally(c);
+    const body = winners.length
+      ? `<div class="winners">${winners.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
+          ${c.group && w.photos.length > 1
+            ? `<div class="squad-pics">${w.photos.map((p) => p ? `<img alt="" src="${esc(p)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
+            : w.photo ? `<img alt="${esc(w.name)}" src="${esc(w.photo)}">` : `<div class="ph">🎃</div>`}
+          <div class="wn">${esc(w.name)}</div><div class="wc">${esc(w.sub)}</div></div>`).join("")}</div>
+         <p class="meta">${top} vote${top === 1 ? "" : "s"}${winners.length > 1 ? " · a ghoulish tie!" : ""}</p>`
+      : `<p class="meta">No votes in this category.</p>`;
+    st.innerHTML = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>${body}${ctl}`;
+  }, 3000);
+}
+$("announceBtn").addEventListener("click", () => {
+  slide = 0; $("stage").classList.remove("hidden"); renderStage();
+  document.documentElement.requestFullscreen?.().catch(() => {});
+});
+$("stage").addEventListener("click", (e) => {
+  const a = e.target.closest("[data-a]")?.dataset.a;
+  if (a === "next") { slide++; renderStage(); }
+  else if (a === "prev") { slide = Math.max(0, slide - 1); renderStage(); }
+  else if (a === "close") { clearTimeout(slideTimer); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); }
+});
+$("pinForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pin = $("pin").value.trim();
+  try {
+    await store.hostSet(pin, open); // re-saves the current open/closed state; only succeeds with the right PIN
+    hostPin = pin; pinOk = true; LS.set("hb-pin", pin);
+    $("pinMsg").innerHTML = ""; renderResults();
+  } catch (err) {
+    if (err.message === "wrong_pin") msg("pinMsg", "err", "Wrong PIN. The crypt stays sealed.");
+    else { console.error(err); msg("pinMsg", "err", "Couldn't check the PIN. Check your connection and try again."); }
+  }
+});
+$("toggleBtn").addEventListener("click", async () => {
+  $("toggleBtn").disabled = true;
+  try { await store.hostSet(hostPin, !open); $("toggleMsg").innerHTML = ""; }
+  catch (err) {
+    if (err.message === "wrong_pin") { pinOk = false; LS.del("hb-pin"); renderResults(); msg("pinMsg", "err", "Your saved PIN no longer works. Enter it again."); }
+    else { console.error(err); msg("toggleMsg", "err", "That didn't go through. Check your connection and try again."); }
+  }
+  $("toggleBtn").disabled = false;
+});
+
+/* ---------- share ---------- */
+const url = location.href.split("#")[0].split("?")[0];
+$("shareLink").textContent = url;
+try { new QRCode($("qr"), { text: url, width: 300, height: 300, colorDark: "#1a0d00", colorLight: "#ffffff" }); } catch { $("qr").classList.add("hidden"); }
+$("copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(url); $("copyBtn").textContent = "Copied! 🦇"; } catch { $("copyBtn").textContent = "Copy failed, long-press the link"; }
+});
+
+function msg(id, kind, text) { $(id).innerHTML = `<div class="notice ${kind}">${esc(text)}</div>`; }
+
+if (location.hash === "#results") show("results"); else show("join");
+</script>
+</body>
+</html>
