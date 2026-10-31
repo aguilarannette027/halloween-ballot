@@ -326,6 +326,8 @@ textarea:focus { border-color: var(--orange); }
 #stage .stage-act { width: auto; padding: 14px 28px; font-size: clamp(16px, 1.6vw, 26px); margin-top: 2vh; }
 
 .finder { margin-top: 6px; }
+.photo-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.photo-links .btn { flex: 1 1 180px; font-size: 15px; }
 .rank { margin-top: 12px; }
 .rank-tag { font-size: 13px; font-weight: 700; }
 .rank select { margin-top: 6px; }
@@ -412,7 +414,10 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
       <button class="btn" type="submit" id="joinBtn">Join the haunt 🎃</button>
       <div id="joinMsg"></div>
     </form>
-    <button class="btn ghosty" id="openSquadPic" type="button" style="font-size:15px">👥 Add a group / duo photo for your squad</button>
+    <div class="photo-links">
+      <button class="btn ghosty" id="openSquadPic" type="button">👥 Add / change a squad photo</button>
+      <button class="btn ghosty" data-mypic type="button">📷 Change my photo</button>
+    </div>
   </section>
 
   <section id="view-registered" class="card hidden">
@@ -439,6 +444,23 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     </div>
     <div id="spMsg"></div>
     <button class="btn ghosty" id="spDone" type="button">Done</button>
+  </section>
+
+  <!-- REGISTER: change a guest's own photo -->
+  <section id="view-mypic" class="card hidden">
+    <h2>Change my photo</h2>
+    <p class="muted">Pick your name, then take or upload a new photo <b>in costume</b>. This is the photo shown if you win.</p>
+    <label for="mpGuest">Your name</label>
+    <select id="mpGuest"></select>
+    <div class="photo-preview" id="mpPreview" style="margin:12px auto 0"><span>🎃</span></div>
+    <div class="photo-btns" style="margin-top:12px">
+      <label class="btn small-btn" for="mpCam">📸 Take a new photo</label>
+      <label class="btn ghosty small-btn" for="mpFile">🖼️ Upload a photo</label>
+      <input id="mpCam" type="file" accept="image/*" capture="user" class="hidden">
+      <input id="mpFile" type="file" accept="image/*" class="hidden">
+    </div>
+    <div id="mpMsg"></div>
+    <button class="btn ghosty" id="mpDone" type="button">Done</button>
   </section>
 
   <!-- VOTE: pick who is voting -->
@@ -479,6 +501,10 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     <p class="muted" style="text-align:center" id="doneText"></p>
     <button class="btn ghosty" id="changeBtn" type="button">✏️ Change my votes</button>
     <button class="btn" id="nextBtn" type="button">👻 Next voter on this phone</button>
+    <div class="photo-links">
+      <button class="btn ghosty" data-squadpic type="button">👥 Add / change a squad photo</button>
+      <button class="btn ghosty" data-mypic type="button">📷 Change my photo</button>
+    </div>
     <div class="stats">
       <div class="stat"><b id="dGuests">0</b><span class="small muted">souls joined</span></div>
       <div class="stat"><b id="dVotes">0</b><span class="small muted">ballots cast</span></div>
@@ -585,6 +611,7 @@ function demoStore() {
     onDecided(cb) { subs.decided.push(cb); cb(load().decided); },
     onSquadPics(cb) { subs.squadPics.push(cb); cb(load().squadPics); },
     async saveSquadPic(key, data) { const d = load(); d.squadPics[key] = data; save(d); },
+    async saveGuestPhoto(key, photo) { const d = load(); if (d.guests[key]) { d.guests[key].photo = photo; save(d); } },
     onRunoffVotes(round, cb) { rsub = round ? [round, cb] : null; if (round) cb(load().rvotes[round] || {}); },
     async joinGuest(key, data) { const d = load(); if (!d.guests[key]) { d.guests[key] = data; save(d); } },
     async saveVote(key, data) { const d = load(); if (!d.open) throw new Error("closed"); d.votes[key] = data; save(d); },
@@ -618,6 +645,7 @@ async function firebaseStore(cfg) {
     onDecided(cb) { fs.onSnapshot(fs.doc(db, "public", "decided"), (s) => cb(s.exists() ? s.data() : {})); },
     onSquadPics(cb) { fs.onSnapshot(fs.collection(db, "squads"), (s) => cb(asMap(s))); },
     async saveSquadPic(key, data) { await fs.setDoc(fs.doc(db, "squads", key), { ...data, at: fs.serverTimestamp() }); },
+    async saveGuestPhoto(key, photo) { await fs.updateDoc(fs.doc(db, "guests", key), { photo }); },
     onRunoffVotes(round, cb) {
       unsubR?.(); unsubR = null;
       if (round) unsubR = fs.onSnapshot(fs.collection(db, "runoffs", round, "votes"), (s) => cb(asMap(s)));
@@ -666,12 +694,13 @@ let runoff = null, rvotes = {}, decided = {}, squadPics = {}; // squadPics: one 
 let me = LS.get("hb-me"); // who is voting on this phone right now
 let mine = (() => { try { return JSON.parse(LS.get("hb-mine")) || []; } catch { return []; } })(); // registered on this phone
 let lastReg = null; // just registered, for the confirmation screen
+let myPicFor = null; // null = not on the change-photo screen, otherwise the preselected guest key
 let hostPin = LS.get("hb-pin") || ""; // saved only after the database accepted it
 let pinOk = !!hostPin;
 let editing = false;
 let view = "register";
 
-store.onGuests((g) => { guests = g; refresh(); renderResults(); });
+store.onGuests((g) => { guests = g; refresh(); renderResults(); if (!$("view-mypic").classList.contains("hidden")) renderMyPic(); });
 store.onVotes((v) => { votes = v; refresh(); renderResults(); });
 store.onOpen((o) => { open = o; if (!o) editing = false; refresh(); renderResults(); });
 store.onDecided((d) => { decided = d || {}; renderResults(); drawStage(); });
@@ -696,7 +725,7 @@ function refresh() {
 
 /* ---------- navigation ---------- */
 function sectionFor(name) {
-  if (name === "register") return squadPicFor !== null ? "squadpic" : lastReg ? "registered" : "register";
+  if (name === "register") return myPicFor !== null ? "mypic" : squadPicFor !== null ? "squadpic" : lastReg ? "registered" : "register";
   if (name === "vote") {
     if (runoff?.open) return me && guests[me] ? "runoff" : "pick";
     if (!open) return "done";
@@ -709,12 +738,13 @@ function show(name) {
   view = name;
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
   const section = sectionFor(name);
-  ["register", "registered", "squadpic", "pick", "vote", "runoff", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  ["register", "registered", "squadpic", "mypic", "pick", "vote", "runoff", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
   if (section === "pick") renderPick();
   if (section === "vote") renderBallot();
   if (section === "done") renderDone();
   if (section === "runoff") renderRunoff();
   if (section === "squadpic") renderSquadPic();
+  if (section === "mypic") renderMyPic();
   $("runoffBar").classList.toggle("hidden", !runoff?.open || name === "vote");
 }
 document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
@@ -835,7 +865,7 @@ function renderSquadPic() {
   $("spPreview").innerHTML = pic ? `<img alt="Group photo" src="${esc(pic)}">` : "<span>👻👻</span>";
   document.querySelectorAll("#view-squadpic .photo-btns label").forEach((l) => l.classList.toggle("disabled", !list.length));
 }
-function openSquadPic(k) { squadPicFor = k || ""; $("spSquad").value = ""; $("spMsg").innerHTML = ""; show("register"); scrollTo(0, 0); }
+function openSquadPic(k) { squadPicFor = k || ""; myPicFor = null; $("spSquad").value = ""; $("spMsg").innerHTML = ""; show("register"); scrollTo(0, 0); }
 $("openSquadPic").addEventListener("click", () => openSquadPic(""));
 $("regSquadPic").addEventListener("click", (e) => openSquadPic(e.currentTarget.dataset.k));
 $("spSquad").addEventListener("change", renderSquadPic);
@@ -853,6 +883,37 @@ $("spDone").addEventListener("click", () => { squadPicFor = null; show("register
     msg("spMsg", "ok", `Group photo saved for ${squads()[k].name}! 🎉`);
     if ($("regSquadPic").dataset.k === k) $("regSquadPic").textContent = `👥 Replace the group photo for ${squads()[k].name}`;
   } catch (err) { console.error(err); msg("spMsg", "err", "That photo didn't save. Check your connection and try again."); }
+}));
+
+/* ---------- register: change a guest's photo ---------- */
+function renderMyPic() {
+  const list = Object.entries(guests).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const cur = $("mpGuest").value || myPicFor;
+  $("mpGuest").innerHTML = `<option value="">Choose your name…</option>` +
+    list.map(([k, g]) => `<option value="${esc(k)}">${esc(g.name)}${g.costume ? " · " + esc(g.costume) : ""}</option>`).join("");
+  if (cur && guests[cur]) $("mpGuest").value = cur;
+  const pic = guests[$("mpGuest").value]?.photo;
+  $("mpPreview").innerHTML = pic ? `<img alt="" src="${esc(pic)}">` : "<span>🎃</span>";
+}
+function openMyPic(k) { myPicFor = k || ""; squadPicFor = null; $("mpGuest").value = ""; $("mpMsg").innerHTML = ""; show("register"); scrollTo(0, 0); }
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-mypic]")) openMyPic(me && guests[me] ? me : lastReg);
+  else if (e.target.closest("[data-squadpic]")) openSquadPic(guests[me]?.squadKey || "");
+});
+$("mpGuest").addEventListener("change", () => { $("mpMsg").innerHTML = ""; renderMyPic(); });
+$("mpDone").addEventListener("click", () => { myPicFor = null; show("register"); scrollTo(0, 0); });
+["mpCam", "mpFile"].forEach((id) => $(id).addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  const k = $("mpGuest").value;
+  if (!file) return;
+  if (!k) return msg("mpMsg", "err", "Choose your name first.");
+  try {
+    const pic = await shrinkPhoto(file);
+    $("mpPreview").innerHTML = `<img alt="" src="${pic}">`;
+    await store.saveGuestPhoto(k, pic);
+    msg("mpMsg", "ok", `New photo saved for ${guests[k].name}! 🎉`);
+  } catch (err) { console.error(err); msg("mpMsg", "err", "That photo didn't save. Check your connection and try again."); }
 }));
 
 $("regAnother").addEventListener("click", () => {
