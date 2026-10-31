@@ -475,7 +475,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
   <section id="view-vote" class="card hidden">
     <div class="voter-banner" id="voteWho"></div>
     <h2>Cast your spell</h2>
-    <p class="muted">Rank your top 3 per award: 🥇 1st gets 3 points, 🥈 2nd gets 2, 🥉 3rd gets 1. The most points wins. You can't vote for yourself, and you can change your votes until the host closes voting. Comments are optional and may be read out when the winners are revealed. 🕸️</p>
+    <p class="muted">Rank your top 3 per award: 🥇 1st gets 3 points, 🥈 2nd gets 2, 🥉 3rd gets 1. The most points wins. You can vote for yourself too, and you can change your votes until the host closes voting. Comments are optional and may be read out when the winners are revealed. 🕸️</p>
     <p class="small muted">Don't see someone? They haven't registered yet. The list updates live.</p>
     <form id="voteForm"><div id="cats"></div>
       <button class="btn" type="submit" id="voteBtn">Seal my votes in blood 🩸</button>
@@ -997,10 +997,9 @@ $("changeBtn").addEventListener("click", () => { editing = true; show("vote"); }
 function renderBallot() {
   if (!me || !guests[me]) return;
   $("voteWho").innerHTML = banner(me, "Voting as", true);
-  const others = Object.entries(guests).filter(([k]) => k !== me).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const others = Object.entries(guests).sort((a, b) => a[1].name.localeCompare(b[1].name));
   const opts = others.map(([k, g]) => `<option value="${esc(k)}">${esc(g.name)}${g.costume ? " · " + esc(g.costume) : ""}</option>`).join("");
-  const mySquad = guests[me]?.squadKey;
-  const squadOpts = Object.entries(squads()).filter(([k]) => k !== mySquad).sort((a, b) => a[1].name.localeCompare(b[1].name))
+  const squadOpts = Object.entries(squads()).sort((a, b) => a[1].name.localeCompare(b[1].name))
     .map(([k, s]) => `<option value="${esc(k)}">${esc(s.name)} · ${esc(s.members.map((m) => m.name).join(", "))}</option>`).join("");
   // Keep what's on screen for this voter; otherwise start from their saved ballot.
   const saved = votes[me] || {};
@@ -1036,8 +1035,8 @@ function finderMatches(c, q) {
   q = q.trim().toLowerCase();
   if (!q) return [];
   const pool = c.group
-    ? Object.entries(squads()).filter(([k]) => k !== guests[me]?.squadKey).map(([k, sq]) => [k, { name: sq.name, costume: sq.members.map((m) => m.name).join(", "), photo: sq.members.find((m) => m.photo)?.photo }])
-    : Object.entries(guests).filter(([k]) => k !== me);
+    ? Object.entries(squads()).map(([k, sq]) => [k, { name: sq.name, costume: sq.members.map((m) => m.name).join(", "), photo: sq.members.find((m) => m.photo)?.photo }])
+    : Object.entries(guests);
   return pool.filter(([, g]) => g.name.toLowerCase().includes(q) || (g.costume || "").toLowerCase().includes(q)).slice(0, 6);
 }
 function syncFinder(sel) {
