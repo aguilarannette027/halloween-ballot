@@ -313,6 +313,13 @@ textarea:focus { border-color: var(--orange); }
 #stage .sp-tile img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; }
 #stage .sp-tile.contain img { object-fit: contain; padding: 10%; box-sizing: border-box; }
 #stage .sp-grid figcaption { margin-top: 1vh; font-size: clamp(14px, 1.4vw, 24px); color: var(--text); font-weight: 600; }
+#stage .spin { position: relative; height: min(44vh, 70vw); aspect-ratio: 1; border-radius: 28px; overflow: hidden; border: 6px solid var(--orange);
+  box-shadow: 0 0 60px rgba(255, 140, 26, 0.55); animation: pulse 0.9s ease-in-out infinite; background: #0f0916; }
+#stage .spin img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.8) brightness(0.9); }
+#stage .spin img:not([src]) { visibility: hidden; }
+#stage .spin .drum { position: absolute; right: 2%; bottom: 0; font-size: min(11vh, 16vw); }
+#stage .spin-cap { font-size: clamp(18px, 2vw, 36px); color: var(--muted); margin-top: 1.2vh; min-height: 1.3em; }
+@keyframes pulse { 50% { transform: scale(1.03); } }
 #stage .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 55; }
 #stage .live { font-size: clamp(18px, 2vw, 36px); color: var(--text); margin-top: 1vh; }
 #stage .live b { color: var(--green); font-family: Creepster, fantasy; font-weight: 400; font-size: 1.5em; }
@@ -534,6 +541,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
 // Each ballot ranks up to three per award: 1st = 3 points, 2nd = 2, 3rd = 1.
 // Older single-pick ballots count as a 1st place pick.
 const POINTS = [0, 3, 2, 1];
+let spinTimer = null; // photo shuffle during the drumroll
 const PLACE = ["", "1st", "2nd", "3rd", "4th", "5th"];
 const MEDAL = ["", "🥇", "🥈", "🥉", "🏅", "🏅"];
 const P = window.PARTY;
@@ -1288,7 +1296,22 @@ function confetti() {
 // a drumroll that keeps going until the host reveals.
 let slide = 0, step = 0, phase = "drum";
 const firstSlide = () => (P.sponsors?.length ? -1 : 0);   // slide -1 thanks the sponsors
+// During a drumroll, guest (or squad) photos flash by in a random order, so the screen never hints at the winner.
+function startSpin(c) {
+  const pool = (c.group ? Object.keys(squads()) : Object.keys(guests)).map((k) => entity(c, k)).filter((e) => e.group || e.photo);
+  const img = $("spinImg"), cap = $("spinCap");
+  if (!img || !pool.length) return;
+  let last = -1;
+  const flip = () => {
+    let i = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && i === last) i = (i + 1) % pool.length;
+    last = i;
+    img.src = pool[i].group || pool[i].photo; cap.textContent = pool[i].name;
+  };
+  flip(); spinTimer = setInterval(flip, 220);
+}
 function drawStage() {
+  clearInterval(spinTimer); spinTimer = null;
   const st = $("stage");
   if (st.classList.contains("hidden")) return;
   const last = slide >= P.categories.length;
@@ -1316,7 +1339,9 @@ function drawStage() {
   const multi = placesOf(c) > 1;
   const head = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${multi ? `<span class="place-tag">${MEDAL[p]} ${PLACE[p]} place</span>` : esc(c.blurb || "")}</p>`;
   if (phase === "drum") {
-    st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">${multi ? `And in ${PLACE[p]} place…` : "And the winner is…"}</p></div>${ctl}`;
+    st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="spin"><img id="spinImg" alt=""><span class="drum">🥁</span></div>
+      <div class="spin-cap" id="spinCap"></div><p class="meta">${multi ? `And in ${PLACE[p]} place…` : "And the winner is…"}</p></div>${ctl}`;
+    startSpin(c);
     return;
   }
   const o = placeOutcome(c, p);
@@ -1382,7 +1407,7 @@ async function stageGo(a) {
     else if (slide === 0 && firstSlide() < 0) slide = -1;
     sound.stop();
   } else if (a === "close") {
-    sound.stop(); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); return;
+    sound.stop(); clearInterval(spinTimer); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); return;
   } else if (a === "sound") {
     sound.toggle();
   } else if (a === "runoff") {
