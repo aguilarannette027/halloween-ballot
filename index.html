@@ -19,17 +19,18 @@ window.PARTY = {
   // Firebase rules (firestore.rules), so it never appears in this page.
   demoPin: "1031",
   // Each category gets one vote per guest. Keep ids short, lowercase, unique.
+  // places: how many prize places to announce (3 = 1st, 2nd and 3rd). Leave it out for a single winner.
   // group: true means guests vote for a squad (group or duo) instead of a person.
   categories: [
-    { id: "best", name: "Best Dressed to Distress", icon: "👑", blurb: "Best overall Halloween costume",
+    { id: "best", places: 3, name: "Best Dressed to Distress", icon: "👑", blurb: "Best overall Halloween costume",
       criteria: ["Visual impact: stands out at first glance", "Attention to detail: costume, makeup and accessories work together", "Character portrayal: brings the look to life through poses and attitude"] },
-    { id: "scary", name: "Nightmare Fuel Award", icon: "👻", blurb: "Scariest costume of the night",
+    { id: "scary", places: 3, name: "Nightmare Fuel Award", icon: "👻", blurb: "Scariest costume of the night",
       criteria: ["Fear factor: gives guests the chills", "Creepy details: effective makeup, props or unsettling touches", "Spooky performance: expressions, movements or sounds that scare"] },
-    { id: "creative", name: "Wickedly Creative Award", icon: "🎨", blurb: "Most original or imaginative costume",
+    { id: "creative", places: 3, name: "Wickedly Creative Award", icon: "🎨", blurb: "Most original or imaginative costume",
       criteria: ["Originality: a fresh or unexpected idea", "Resourcefulness: uses materials or everyday items imaginatively", "Execution: makes the creative concept clear and convincing"] },
-    { id: "funny", name: "Laugh Till You Drop Dead Award", icon: "😂", blurb: "Funniest Halloween costume",
+    { id: "funny", places: 3, name: "Laugh Till You Drop Dead Award", icon: "😂", blurb: "Funniest Halloween costume",
       criteria: ["Humor: gets the biggest laughs", "Cleverness: a witty concept, pun or playful twist", "Comic delivery: funny gestures, expressions or interactions"] },
-    { id: "squad", name: "Squad Ghouls Award", icon: "🧛", blurb: "Best coordinated group or duo costume", group: true,
+    { id: "squad", places: 3, name: "Squad Ghouls Award", icon: "🧛", blurb: "Best coordinated group or duo costume", group: true,
       criteria: ["Theme cohesion: everyone clearly fits the shared concept", "Group creativity: an imaginative take on the theme", "Team performance: members interact and bring the theme to life together"] }
   ],
   // Paste your Firebase web config here (see SETUP.md). While it is empty the
@@ -286,6 +287,7 @@ textarea:focus { border-color: var(--orange); }
 .runoff-grid .tick { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--green); color: #0b2a07; border-radius: 99px; font-size: 12px; font-weight: 700; padding: 3px 10px; white-space: nowrap; }
 #stage .winners.small .w img, #stage .winners.small .w .ph { height: min(34vh, 70vw); }
 #stage .winners.small .w .wn { font-size: clamp(28px, 3.5vw, 64px); }
+#stage .place-tag { display: inline-block; font-family: Creepster, fantasy; color: var(--orange-2); font-size: clamp(24px, 3vw, 54px); letter-spacing: 0.04em; }
 #stage .live { font-size: clamp(18px, 2vw, 36px); color: var(--text); margin-top: 1vh; }
 #stage .live b { color: var(--green); font-family: Creepster, fantasy; font-weight: 400; font-size: 1.5em; }
 #stage .stage-act { width: auto; padding: 14px 28px; font-size: clamp(16px, 1.6vw, 26px); margin-top: 2vh; }
@@ -300,6 +302,14 @@ textarea:focus { border-color: var(--orange); }
 .suggest button:hover, .suggest button.on { border-color: var(--orange); }
 .suggest .mini { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex: none; display: grid; place-items: center; background: #0f0916; }
 .cat select { margin-top: 8px; }
+
+.group-preview { margin-top: 14px; width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; display: grid; place-items: center; font-size: 48px; background: #0f0916; border: 2px dashed #5a3d7a; }
+.group-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-btns label.disabled { opacity: 0.5; pointer-events: none; }
+#stage .w img.group-pic { aspect-ratio: 4 / 3; height: min(56vh, 70vw); max-width: 90vw; }
+#stage .winners.multi .w img.group-pic { height: min(40vh, 45vw); }
+#stage .winners.small .w img.group-pic { height: min(32vh, 45vw); }
+.runoff-grid img.group-pic { aspect-ratio: 4 / 3; }
 
 .hidden { display: none !important; }
 .big-emoji { font-size: 72px; text-align: center; margin: 4px 0; }
@@ -366,6 +376,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
       <button class="btn" type="submit" id="joinBtn">Join the haunt 🎃</button>
       <div id="joinMsg"></div>
     </form>
+    <button class="btn ghosty" id="openSquadPic" type="button" style="font-size:15px">👥 Add a group / duo photo for your squad</button>
   </section>
 
   <section id="view-registered" class="card hidden">
@@ -373,7 +384,25 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
     <h2 style="text-align:center">You're on the ballot!</h2>
     <div id="regCard" class="voter-banner"></div>
     <p class="muted" style="text-align:center">Voting opens later in the party. When the host gives the signal, open the <b>Vote</b> tab and tap your photo.</p>
+    <button class="btn ghosty hidden" id="regSquadPic" type="button"></button>
     <button class="btn" id="regAnother" type="button">📸 Register another person</button>
+  </section>
+
+  <!-- REGISTER: squad group photo -->
+  <section id="view-squadpic" class="card hidden">
+    <h2>Squad group photo</h2>
+    <p class="muted">Groups and duos: snap one photo of the whole squad <b>in costume</b>. If your squad wins, this is the photo shown on the big screen. Anyone in the squad can add it or replace it.</p>
+    <label for="spSquad">Your squad</label>
+    <select id="spSquad"></select>
+    <div class="group-preview" id="spPreview"><span>👻👻</span></div>
+    <div class="photo-btns" style="margin-top:12px">
+      <label class="btn small-btn" for="spCam">📸 Take the group photo</label>
+      <label class="btn ghosty small-btn" for="spFile">🖼️ Upload a photo</label>
+      <input id="spCam" type="file" accept="image/*" capture="environment" class="hidden">
+      <input id="spFile" type="file" accept="image/*" class="hidden">
+    </div>
+    <div id="spMsg"></div>
+    <button class="btn ghosty" id="spDone" type="button">Done</button>
   </section>
 
   <!-- VOTE: pick who is voting -->
@@ -400,7 +429,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
   <section id="view-runoff" class="card hidden">
     <div class="voter-banner" id="runoffWho"></div>
     <h2>⚡ Tie-breaker!</h2>
-    <p class="muted">It's a tie for <b id="runoffTitle"></b>. Only one can win, so tap your favorite below.</p>
+    <p class="muted">It's a tie in <b id="runoffTitle"></b>. Tap your favorite below. The most votes takes the higher place.</p>
     <div id="runoffChoices" class="runoff-grid"></div>
     <div id="runoffMsg"></div>
     <button class="btn" id="runoffNext" type="button">👻 Next voter on this phone</button>
@@ -444,7 +473,7 @@ footer { text-align: center; margin-top: 40px; color: #6d5d7a; font-size: 12px; 
       <div id="toggleMsg"></div>
       <button class="btn ghosty" id="resetTies" type="button" style="font-size:14px;padding:10px">Clear tie-breaker results (after a test run)</button>
       <button class="btn" id="announceBtn" type="button">🎬 Announce the winners (full screen)</button>
-      <p class="small muted">Put this on a TV or projector. You control the pace: each award opens on a drumroll, and nothing is revealed until you press → (or space, or the Reveal button). Ties get a tie-breaker vote right there on the big screen.</p>
+      <p class="small muted">Put this on a TV or projector (turn the sound up for the drumroll 🥁). You control the pace: each award counts down 3rd, 2nd, then 1st place, and each one keeps drumming until you press → (or space, or Reveal). Ties get a tie-breaker vote right there on the big screen.</p>
       <div id="results"></div>
       <h3 style="margin-top:24px">Guests</h3>
       <p class="small muted">Green outline = has voted.</p>
@@ -494,15 +523,15 @@ document.title = P.title;
 
 function demoStore() {
   const K = "haunted-ballot-demo";
-  const blank = () => ({ guests: {}, votes: {}, open: true, runoff: null, decided: {}, rvotes: {} });
+  const blank = () => ({ guests: {}, votes: {}, open: true, runoff: null, decided: {}, rvotes: {}, squadPics: {} });
   const load = () => { try { return { ...blank(), ...JSON.parse(LS.get(K)) }; } catch { return blank(); } };
   const save = (d) => { LS.set(K, JSON.stringify(d)); fire(); };
-  const subs = { guests: [], votes: [], open: [], runoff: [], decided: [] };
+  const subs = { guests: [], votes: [], open: [], runoff: [], decided: [], squadPics: [] };
   let rsub = null; // [round, cb]
   const fire = () => {
     const d = load();
     subs.guests.forEach((f) => f(d.guests)); subs.votes.forEach((f) => f(d.votes)); subs.open.forEach((f) => f(d.open));
-    subs.runoff.forEach((f) => f(d.runoff)); subs.decided.forEach((f) => f(d.decided));
+    subs.runoff.forEach((f) => f(d.runoff)); subs.decided.forEach((f) => f(d.decided)); subs.squadPics.forEach((f) => f(d.squadPics));
     if (rsub) rsub[1](d.rvotes[rsub[0]] || {});
   };
   window.addEventListener("storage", (e) => { if (e.key === K) fire(); });
@@ -512,6 +541,8 @@ function demoStore() {
     onOpen(cb) { subs.open.push(cb); cb(load().open); },
     onRunoff(cb) { subs.runoff.push(cb); cb(load().runoff); },
     onDecided(cb) { subs.decided.push(cb); cb(load().decided); },
+    onSquadPics(cb) { subs.squadPics.push(cb); cb(load().squadPics); },
+    async saveSquadPic(key, data) { const d = load(); d.squadPics[key] = data; save(d); },
     onRunoffVotes(round, cb) { rsub = round ? [round, cb] : null; if (round) cb(load().rvotes[round] || {}); },
     async joinGuest(key, data) { const d = load(); if (!d.guests[key]) { d.guests[key] = data; save(d); } },
     async saveVote(key, data) { const d = load(); if (!d.open) throw new Error("closed"); d.votes[key] = data; save(d); },
@@ -543,6 +574,8 @@ async function firebaseStore(cfg) {
     onOpen(cb) { fs.onSnapshot(fs.doc(db, "public", "state"), (s) => cb((open = !s.exists() || s.data().open !== false))); },
     onRunoff(cb) { fs.onSnapshot(fs.doc(db, "public", "runoff"), (s) => cb(s.exists() ? s.data() : null)); },
     onDecided(cb) { fs.onSnapshot(fs.doc(db, "public", "decided"), (s) => cb(s.exists() ? s.data() : {})); },
+    onSquadPics(cb) { fs.onSnapshot(fs.collection(db, "squads"), (s) => cb(asMap(s))); },
+    async saveSquadPic(key, data) { await fs.setDoc(fs.doc(db, "squads", key), { ...data, at: fs.serverTimestamp() }); },
     onRunoffVotes(round, cb) {
       unsubR?.(); unsubR = null;
       if (round) unsubR = fs.onSnapshot(fs.collection(db, "runoffs", round, "votes"), (s) => cb(asMap(s)));
@@ -587,7 +620,7 @@ if (!live) $("demoNote").classList.remove("hidden");
 
 /* ---------- state ---------- */
 let guests = {}, votes = {}, open = true;
-let runoff = null, rvotes = {}, decided = {}; // tie-breaker in progress, its votes, and winners settled by tie-breakers
+let runoff = null, rvotes = {}, decided = {}, squadPics = {}; // squadPics: one group photo per squad // tie-breaker in progress, its votes, and winners settled by tie-breakers
 let me = LS.get("hb-me"); // who is voting on this phone right now
 let mine = (() => { try { return JSON.parse(LS.get("hb-mine")) || []; } catch { return []; } })(); // registered on this phone
 let lastReg = null; // just registered, for the confirmation screen
@@ -600,6 +633,7 @@ store.onGuests((g) => { guests = g; refresh(); renderResults(); });
 store.onVotes((v) => { votes = v; refresh(); renderResults(); });
 store.onOpen((o) => { open = o; if (!o) editing = false; refresh(); renderResults(); });
 store.onDecided((d) => { decided = d || {}; renderResults(); drawStage(); });
+store.onSquadPics((sp) => { squadPics = sp || {}; renderResults(); drawStage(); if (!$("view-squadpic").classList.contains("hidden")) renderSquadPic(); });
 store.onRunoff((r) => {
   const newRound = r?.round !== runoff?.round;
   runoff = r && r.cat ? r : null;
@@ -620,7 +654,7 @@ function refresh() {
 
 /* ---------- navigation ---------- */
 function sectionFor(name) {
-  if (name === "register") return lastReg ? "registered" : "register";
+  if (name === "register") return squadPicFor !== null ? "squadpic" : lastReg ? "registered" : "register";
   if (name === "vote") {
     if (runoff?.open) return me && guests[me] ? "runoff" : "pick";
     if (!open) return "done";
@@ -633,11 +667,12 @@ function show(name) {
   view = name;
   document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.toggle("on", b.dataset.view === name));
   const section = sectionFor(name);
-  ["register", "registered", "pick", "vote", "runoff", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
+  ["register", "registered", "squadpic", "pick", "vote", "runoff", "done", "results", "share"].forEach((s) => $("view-" + s).classList.toggle("hidden", s !== section));
   if (section === "pick") renderPick();
   if (section === "vote") renderBallot();
   if (section === "done") renderDone();
   if (section === "runoff") renderRunoff();
+  if (section === "squadpic") renderSquadPic();
   $("runoffBar").classList.toggle("hidden", !runoff?.open || name === "vote");
 }
 document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => show(b.dataset.view)));
@@ -653,11 +688,11 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-switch]"
 let photo = ""; // compressed JPEG data URL, small enough to live inside the guest record
 
 // Shrink the photo to at most 720px JPEG (~70KB) so it loads fast on every phone.
-function shrinkPhoto(file) {
+function shrinkPhoto(file, max = 720) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const max = 720, s = Math.min(1, max / Math.max(img.width, img.height));
+      const s = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement("canvas");
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
@@ -704,6 +739,9 @@ $("joinForm").addEventListener("submit", async (e) => {
     if (!mine.includes(key)) { mine.push(key); LS.set("hb-mine", JSON.stringify(mine)); }
     lastReg = key;
     $("regCard").innerHTML = banner(key, "Registered", false);
+    const sk = squad ? squadKeyOf(squad) : "";
+    $("regSquadPic").classList.toggle("hidden", !sk);
+    if (sk) { $("regSquadPic").dataset.k = sk; $("regSquadPic").textContent = `👥 ${squadPics[sk] ? "Replace" : "Add"} the group photo for ${squad}`; }
     $("joinMsg").innerHTML = "";
     show("register"); scrollTo(0, 0);
   } catch (err) { console.error(err); msg("joinMsg", "err", "The spirits are restless. Check your connection and try again."); }
@@ -741,6 +779,39 @@ $("squadSug").addEventListener("click", (e) => {
   if (!b) return;
   $("squad").value = b.dataset.squad; showSquadSug(); $("joinMsg").innerHTML = "";
 });
+
+/* ---------- register: squad group photo ---------- */
+let squadPicFor = null; // null = not on this screen, otherwise the preselected squad key
+function renderSquadPic() {
+  const list = Object.entries(squads()).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const cur = $("spSquad").value || squadPicFor;
+  $("spSquad").innerHTML = list.length
+    ? list.map(([k, sq]) => `<option value="${esc(k)}">${esc(sq.name)} · ${esc(sq.members.map((m) => m.name).join(", "))}</option>`).join("")
+    : `<option value="">No squads registered yet</option>`;
+  if (cur && list.some(([k]) => k === cur)) $("spSquad").value = cur;
+  const pic = squadPics[$("spSquad").value]?.photo;
+  $("spPreview").innerHTML = pic ? `<img alt="Group photo" src="${esc(pic)}">` : "<span>👻👻</span>";
+  document.querySelectorAll("#view-squadpic .photo-btns label").forEach((l) => l.classList.toggle("disabled", !list.length));
+}
+function openSquadPic(k) { squadPicFor = k || ""; $("spSquad").value = ""; $("spMsg").innerHTML = ""; show("register"); scrollTo(0, 0); }
+$("openSquadPic").addEventListener("click", () => openSquadPic(""));
+$("regSquadPic").addEventListener("click", (e) => openSquadPic(e.currentTarget.dataset.k));
+$("spSquad").addEventListener("change", renderSquadPic);
+$("spDone").addEventListener("click", () => { squadPicFor = null; show("register"); scrollTo(0, 0); });
+["spCam", "spFile"].forEach((id) => $(id).addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  const k = $("spSquad").value;
+  if (!file) return;
+  if (!k) return msg("spMsg", "err", "Register your squad members first, then add the group photo.");
+  try {
+    const photo = await shrinkPhoto(file, 1000); // group photos get a bit more room for faces
+    $("spPreview").innerHTML = `<img alt="Group photo" src="${photo}">`;
+    await store.saveSquadPic(k, { name: squads()[k].name, photo });
+    msg("spMsg", "ok", `Group photo saved for ${squads()[k].name}! 🎉`);
+    if ($("regSquadPic").dataset.k === k) $("regSquadPic").textContent = `👥 Replace the group photo for ${squads()[k].name}`;
+  } catch (err) { console.error(err); msg("spMsg", "err", "That photo didn't save. Check your connection and try again."); }
+}));
 
 $("regAnother").addEventListener("click", () => {
   lastReg = null;
@@ -793,7 +864,7 @@ function renderRunoff() {
   $("runoffChoices").innerHTML = inTie
     ? `<p class="notice demo">You're one of the finalists! You can't vote for yourself, so sit back and keep your fingers crossed. 🤞</p>`
     : choices.map((x) => `<button type="button" class="${mineNow === x.k ? "on" : ""}" data-r="${esc(x.k)}">
-        ${x.photo ? `<img alt="" src="${esc(x.photo)}">` : `<span class="ph">🎃</span>`}
+        ${x.photo ? `<img alt="" ${x.group ? `class="group-pic"` : ""} src="${esc(x.photo)}">` : `<span class="ph">🎃</span>`}
         <div class="pn">${esc(x.name)}</div><div class="pc">${esc(x.sub)}</div>${mineNow === x.k ? `<div class="tick">Your vote ✓</div>` : ""}</button>`).join("");
   $("runoffMsg").innerHTML = mineNow && !inTie ? `<div class="notice ok">Vote in! You can switch until the host stops the tie-breaker.</div>` : "";
 }
@@ -926,18 +997,22 @@ function renderResults() {
   $("toggleBtn").classList.toggle("danger", open);
   $("results").innerHTML = P.categories.map((c) => {
     const { rows, top } = tally(c);
-    const o = outcome(c);
-    const winners = o.state === "winner" ? o.keys.map((k) => entity(c, k)) : [];
-    const quotes = winners.length ? winnerComments(c, o.keys) : [];
     if (!rows.length) return `<div class="result cat"><h3>${c.icon} ${esc(c.name)}</h3><p class="muted small">No votes yet.</p></div>`;
+    const t = Object.fromEntries(rows);
+    const podium = ranking(c).map((it) => {
+      if (it.tie) {
+        const live = runoff?.open && runoff.cat === c.id && sameSet(runoff.candidates, it.keys);
+        return `<p class="notice demo">${live ? "⚡ Tie-breaker in progress" : `Tie for ${placeRange(c, it.place, it.keys.length)}`} between ${it.keys.map((k) => esc(entity(c, k).name)).join(" & ")}.${live ? "" : " Break it during the announcement."}</p>`;
+      }
+      const k = it.keys[0], w = entity(c, k), quotes = winnerComments(c, [k]);
+      return `<div class="winner">${avatar(w.photo, "avatar")}<div><div class="name">${placesOf(c) > 1 ? MEDAL[it.place] : "🏆"} ${esc(w.name)}</div>
+        <div class="small muted">${esc(w.sub)} · ${t[k]} vote${t[k] === 1 ? "" : "s"}</div>
+        ${quotes.map((q) => `<p class="quote-sm">💬 “${esc(q.text)}” — ${esc(q.by)}</p>`).join("")}</div></div>`;
+    }).join("");
     return `<div class="result cat">
-      <h3>${c.icon} ${esc(c.name)}</h3>
-      ${winners.map((w) => `<div class="winner">${avatar(w.photo, "avatar")}<div><div class="name">🏆 ${esc(w.name)}</div>
-        <div class="small muted">${esc(w.sub)}${decided[c.id] ? " · won the tie-breaker" : ` · ${top} vote${top === 1 ? "" : "s"}`}</div></div></div>`).join("")}
-      ${o.state === "tie" ? `<p class="notice demo">It's a tie between ${o.keys.map((k) => esc(entity(c, k).name)).join(" & ")}. Start a tie-breaker during the announcement.</p>` : ""}
-      ${o.state === "runoff" ? `<p class="notice demo">⚡ Tie-breaker in progress.</p>` : ""}
-      ${quotes.map((q) => `<p class="quote-sm">💬 “${esc(q.text)}” — ${esc(q.by)}</p>`).join("")}
-      ${rows.slice(0, 5).map(([k, n]) => { const e = entity(c, k); return `<div class="row"><span class="who">${avatar(e.photo, "mini")}<span class="nm">${esc(e.name)}</span></span><span class="bar"><i style="width:${(n / top) * 100}%"></i></span><span>${n}</span></div>`; }).join("")}
+      <h3>${c.icon} ${esc(c.name)}${placesOf(c) > 1 ? ` <span class="muted small">· top ${placesOf(c)}</span>` : ""}</h3>
+      ${podium}
+      ${rows.slice(0, 6).map(([k, n]) => { const e = entity(c, k); return `<div class="row"><span class="who">${avatar(e.photo, "mini")}<span class="nm">${esc(e.name)}</span></span><span class="bar"><i style="width:${(n / top) * 100}%"></i></span><span>${n}</span></div>`; }).join("")}
     </div>`;
   }).join("");
   $("guestList").innerHTML = Object.entries(guests).sort((a, b) => a[1].name.localeCompare(b[1].name))
@@ -958,7 +1033,8 @@ function entity(c, k) {
   if (c.group) {
     const s = squads()[k];
     if (!s) return { name: k, sub: "", photo: "", photos: [] };
-    return { name: s.name, sub: s.members.map((m) => m.name).join(", "), photo: s.members.find((m) => m.photo)?.photo || "", photos: s.members.map((m) => m.photo) };
+    const group = squadPics[k]?.photo || "";
+    return { name: s.name, sub: s.members.map((m) => m.name).join(", "), photo: group || s.members.find((m) => m.photo)?.photo || "", photos: s.members.map((m) => m.photo), group };
   }
   const g = guests[k] || { name: k };
   return { name: g.name, sub: g.costume || "", photo: g.photo || "", photos: [g.photo] };
@@ -976,59 +1052,155 @@ function avatar(src, cls) {
 }
 
 /* ---------- winner announcement ---------- */
-// Comments people wrote for whoever won this award, with the voter's name.
+const PLACE = ["", "1st", "2nd", "3rd", "4th", "5th"];
+const MEDAL = ["", "🥇", "🥈", "🥉", "🏅", "🏅"];
+const placesOf = (c) => c.places || 1;
+const sameSet = (a, b) => a.length === b.length && a.every((k) => b.includes(k));
+const sigOf = (c, keys) => c.id + "|" + [...keys].sort().join("|");
+function placeRange(c, from, n) {
+  const to = Math.min(from + n - 1, placesOf(c));
+  return from === to ? `${PLACE[from]} place` : `${PLACE[from]} to ${PLACE[to]} place`;
+}
+// Comments people wrote for whoever won, with the voter's name.
 function winnerComments(c, keys) {
   return Object.values(votes)
     .filter((v) => keys.includes(v.picks?.[c.id]) && v.comments?.[c.id])
     .map((v) => ({ text: v.comments[c.id], by: v.voter || "" }));
 }
-// Where an award stands: a single winner, a tie waiting for a tie-breaker, or a tie-breaker in progress.
-function outcome(c) {
-  if (decided[c.id]) return { state: "winner", keys: [decided[c.id]] };
-  const { keys, top } = tally(c);
-  if (!keys.length) return { state: "none", keys };
-  if (runoff?.cat === c.id && runoff.open) return { state: "runoff", keys: runoff.candidates };
-  if (runoff?.cat === c.id && runoff.stillTied?.length > 1) return { state: "tie", keys: runoff.stillTied, again: true };
-  if (keys.length === 1) return { state: "winner", keys, top };
-  return { state: "tie", keys, top };
+// Standings for an award down to its last prize place. People with equal votes stay grouped as a tie
+// until a tie-breaker orders them; tie-breaker results are stored per tied group in `decided`.
+function ranking(c) {
+  const groups = [];
+  tally(c).rows.forEach(([k, n]) => { const g = groups[groups.length - 1]; if (g && g.n === n) g.keys.push(k); else groups.push({ n, keys: [k] }); });
+  const flat = [];
+  const resolve = (keys) => {
+    if (keys.length === 1) return flat.push({ keys });
+    let order = null;
+    try { order = JSON.parse(decided[sigOf(c, keys)] || "null"); } catch {}
+    if (!Array.isArray(order)) return flat.push({ keys, tie: true });
+    order.forEach(resolve); // a tie-breaker can itself leave a smaller tie, which needs another round
+  };
+  groups.forEach((g) => resolve(g.keys));
+  const out = [];
+  let pos = 1;
+  for (const it of flat) { if (pos > placesOf(c)) break; out.push({ ...it, place: pos }); pos += it.keys.length; }
+  return out;
 }
-// The host moves through each award one click at a time: title + drumroll, then the reveal.
-let slide = 0, phase = "drum";
+// What to show for one place: the winner, a tie to break first, or a tie-breaker in progress.
+function placeOutcome(c, p) {
+  const it = ranking(c).find((x) => p >= x.place && p < x.place + x.keys.length);
+  if (!it) return { state: "none" };
+  if (!it.tie) return { state: "winner", keys: it.keys };
+  if (runoff?.open && runoff.cat === c.id && sameSet(runoff.candidates, it.keys)) return { state: "runoff", keys: it.keys, from: it.place };
+  const again = Object.entries(decided).some(([s, v]) => s.startsWith(c.id + "|") && (() => { try { return JSON.parse(v).some((g) => g.length > 1 && sameSet(g, it.keys)); } catch { return false; } })());
+  return { state: "tie", keys: it.keys, from: it.place, again };
+}
+// Places revealed for an award, counted down so 1st place comes last.
+function stepsFor(c) {
+  const n = Math.max(1, Math.min(placesOf(c), tally(c).rows.length));
+  return Array.from({ length: n }, (_, i) => n - i);
+}
+
+// Drumroll and cymbal made with Web Audio, so there is no sound file to host.
+const sound = (() => {
+  let ctx = null, noise = null, timer = null, on = LS.get("hb-sound") !== "off";
+  const init = () => {
+    ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    if (!noise) {
+      noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+  };
+  const hit = (t, vol) => {
+    const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = noise; bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = 0.8;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    src.connect(bp).connect(g).connect(ctx.destination); src.start(t, Math.random() * 1.5, 0.1);
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.frequency.value = 190; og.gain.setValueAtTime(vol * 0.35, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    o.connect(og).connect(ctx.destination); o.start(t); o.stop(t + 0.06);
+  };
+  return {
+    get on() { return on; },
+    toggle() { on = !on; LS.set("hb-sound", on ? "on" : "off"); if (!on) this.stop(); return on; },
+    // Rolls (and slowly gets louder) until the host reveals.
+    roll() {
+      this.stop();
+      if (!on) return;
+      try { init(); } catch { return; }
+      const start = ctx.currentTime;
+      let next = start;
+      timer = setInterval(() => {
+        while (next < ctx.currentTime + 0.2) {
+          hit(next, Math.min(0.9, 0.25 + (next - start) * 0.08) * (0.85 + Math.random() * 0.3));
+          next += 0.045 + Math.random() * 0.01;
+        }
+      }, 50);
+    },
+    stop() { clearInterval(timer); timer = null; },
+    crash() {
+      this.stop();
+      if (!on) return;
+      try { init(); } catch { return; }
+      const t = ctx.currentTime + 0.02;
+      const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = noise; hp.type = "highpass"; hp.frequency.value = 4000;
+      g.gain.setValueAtTime(0.7, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+      src.connect(hp).connect(g).connect(ctx.destination); src.start(t); src.stop(t + 1.9);
+      const o = ctx.createOscillator(), og = ctx.createGain();
+      o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(50, t + 0.3);
+      og.gain.setValueAtTime(0.9, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      o.connect(og).connect(ctx.destination); o.start(t); o.stop(t + 0.45);
+    }
+  };
+})();
+
+// The host moves through each award one click at a time: for every place (3rd, 2nd, then 1st)
+// a drumroll that keeps going until the host reveals.
+let slide = 0, step = 0, phase = "drum";
 function drawStage() {
   const st = $("stage");
   if (st.classList.contains("hidden")) return;
   const last = slide >= P.categories.length;
-  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide || phase === "show" ? "" : "disabled"}>◀ Back</button>
+  const ctl = `<div class="controls"><button class="btn ghosty" data-a="prev" ${slide || step || phase === "show" ? "" : "disabled"}>◀ Back</button>
+    <button class="btn ghosty" data-a="sound" title="Sound on/off">${sound.on ? "🔊" : "🔇"}</button>
     <button class="btn ghosty" data-a="close">Exit</button>
-    ${last ? "" : `<button class="btn" data-a="next">${phase === "drum" ? "Reveal ▶" : "Next award ▶"}</button>`}</div>`;
+    ${last ? "" : `<button class="btn" data-a="next">${phase === "drum" ? "Reveal ▶" : "Next ▶"}</button>`}</div>`;
   if (last) {
     st.innerHTML = `<div class="reveal" style="flex-direction:column"><div class="big-emoji" style="font-size:16vh">🎃🦇👻</div>
-      <div class="award">Happy Halloween!</div><p class="award-blurb">Thanks for haunting with us tonight.</p></div>${ctl}`;
+      <div class="award">Happy Halloween and see you next year.</div>
+      <div class="award" style="font-size:clamp(28px,4vw,72px);color:var(--orange-2);margin-top:2vh">Bawi sa mga di nanalo!</div></div>${ctl}`;
     return;
   }
   const c = P.categories[slide];
-  const head = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${esc(c.blurb || "")}</p>`;
+  const p = stepsFor(c)[step];
+  const multi = placesOf(c) > 1;
+  const head = `<div class="award">${c.icon} ${esc(c.name)}</div><p class="award-blurb">${multi ? `<span class="place-tag">${MEDAL[p]} ${PLACE[p]} place</span>` : esc(c.blurb || "")}</p>`;
   if (phase === "drum") {
-    st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">And the winner is…</p></div>${ctl}`;
+    st.innerHTML = `${head}<div class="reveal" style="flex-direction:column"><div class="drum">🥁</div><p class="meta">${multi ? `And in ${PLACE[p]} place…` : "And the winner is…"}</p></div>${ctl}`;
     return;
   }
-  const o = outcome(c);
-  const ents = o.keys.map((k) => entity(c, k));
+  const o = placeOutcome(c, p);
+  const ents = (o.keys || []).map((k) => entity(c, k));
   const pics = (list, cls = "") => `<div class="winners ${list.length > 1 ? "multi" : ""} ${cls}">${list.map((w, i) => `<div class="w" style="animation-delay:${i * 0.25}s">
-      ${c.group && w.photos.length > 1 && list.length === 1
-        ? `<div class="squad-pics">${w.photos.map((p) => p ? `<img alt="" src="${esc(p)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
+      ${w.group
+        ? `<img class="group-pic" alt="${esc(w.name)}" src="${esc(w.group)}">`
+        : c.group && w.photos.length > 1 && list.length === 1
+        ? `<div class="squad-pics">${w.photos.map((ph) => ph ? `<img alt="" src="${esc(ph)}">` : `<div class="ph">🎃</div>`).join("")}</div>`
         : w.photo ? `<img alt="${esc(w.name)}" src="${esc(w.photo)}">` : `<div class="ph">🎃</div>`}
       <div class="wn">${esc(w.name)}</div><div class="wc">${esc(w.sub)}</div></div>`).join("")}</div>`;
   let body;
-  if (o.state === "none") body = `<p class="meta">No votes in this award.</p>`;
+  if (o.state === "none") body = `<p class="meta">No votes for this place.</p>`;
   else if (o.state === "winner") {
     const quotes = winnerComments(c, o.keys);
     body = `<div>${pics(ents)}</div>
       ${quotes.length ? `<div class="quotes">${quotes.map((q, i) => `<div class="quote" style="animation-delay:${1 + i * 0.6}s">“${esc(q.text)}”${q.by ? `<span class="by">— ${esc(q.by)}</span>` : ""}</div>`).join("")}</div>` : ""}`;
   } else if (o.state === "tie") {
-    body = `<div style="text-align:center"><div class="award" style="font-size:clamp(26px,3.4vw,60px);margin-bottom:2vh">${o.again ? "Still a tie!" : "It's a tie!"} 😱</div>${pics(ents, "small")}
+    body = `<div style="text-align:center"><div class="award" style="font-size:clamp(26px,3.4vw,60px);margin-bottom:2vh">${o.again ? "Still a tie" : `It's a ${ents.length}-way tie`} for ${placeRange(c, o.from, ents.length)}! 😱</div>${pics(ents, "small")}
       <button class="btn stage-act" data-a="runoff">⚡ Start tie-breaker vote</button>
-      <p class="meta">Guests vote on their phones between these ${ents.length} only.</p></div>`;
+      <p class="meta">Guests vote on their phones between these ${ents.length} only. Most votes takes the higher place.</p></div>`;
   } else {
     const n = Object.values(rvotes).filter((v) => o.keys.includes(v.pick)).length;
     body = `<div style="text-align:center"><div class="award" style="font-size:clamp(26px,3.4vw,60px);margin-bottom:2vh">⚡ Tie-breaker! Vote on your phones</div>${pics(ents, "small")}
@@ -1037,7 +1209,7 @@ function drawStage() {
   }
   st.innerHTML = `${head}<div class="reveal">${body}</div>${ctl}`;
 }
-async function host(open_, extra, errEl) {
+async function host(open_, extra) {
   try { await store.hostSet(hostPin, open_, extra); return true; }
   catch (err) {
     console.error(err);
@@ -1048,32 +1220,49 @@ async function host(open_, extra, errEl) {
   }
 }
 function alertStage(text) { const m = document.createElement("div"); m.className = "notice err"; m.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:60"; m.textContent = text; document.body.append(m); setTimeout(() => m.remove(), 4000); }
+// Sound cue for whatever the stage now shows.
+function cue() {
+  if (slide >= P.categories.length) return sound.crash();
+  if (phase === "drum") return sound.roll();
+  const c = P.categories[slide];
+  placeOutcome(c, stepsFor(c)[step]).state === "winner" ? sound.crash() : sound.stop();
+}
 async function stageGo(a) {
   const c = P.categories[slide];
   if (a === "next") {
     if (slide >= P.categories.length) return;
-    if (phase === "drum") phase = "show"; else { slide++; phase = "drum"; }
+    if (phase === "drum") phase = "show";
+    else if (step < stepsFor(c).length - 1) { step++; phase = "drum"; }
+    else { slide++; step = 0; phase = "drum"; }
+    cue();
   } else if (a === "prev") {
-    if (phase === "show") phase = "drum"; else if (slide > 0) { slide--; phase = "show"; }
+    if (phase === "show") phase = "drum";
+    else if (step > 0) { step--; phase = "show"; }
+    else if (slide > 0) { slide--; step = stepsFor(P.categories[slide]).length - 1; phase = "show"; }
+    sound.stop();
   } else if (a === "close") {
-    $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); return;
+    sound.stop(); $("stage").classList.add("hidden"); if (document.fullscreenElement) document.exitFullscreen?.(); return;
+  } else if (a === "sound") {
+    sound.toggle();
   } else if (a === "runoff") {
-    const o = outcome(c);
-    await host(false, { runoff: { cat: c.id, candidates: o.keys, round: `${c.id}-${Date.now()}`, open: true, stillTied: [] } });
+    const o = placeOutcome(c, stepsFor(c)[step]);
+    await host(false, { runoff: { cat: c.id, candidates: o.keys, round: `${c.id}-${Date.now()}`, open: true } });
   } else if (a === "stoprunoff") {
-    const t = {};
-    runoff.candidates.forEach((k) => (t[k] = 0));
+    // Rank the finalists by tie-breaker votes; anyone still level stays grouped for another round.
+    const t = Object.fromEntries(runoff.candidates.map((k) => [k, 0]));
     Object.values(rvotes).forEach((v) => { if (v.pick in t) t[v.pick]++; });
-    const top = Math.max(...Object.values(t));
-    const tied = Object.keys(t).filter((k) => t[k] === top);
-    if (tied.length === 1) {
-      if (await host(false, { runoff: { ...runoff, open: false }, decided: { [c.id]: tied[0] } })) phase = "drum"; // drumroll again, then reveal
-    } else await host(false, { runoff: { ...runoff, open: false, stillTied: tied } });
+    const order = [];
+    Object.entries(t).sort((x, y) => y[1] - x[1]).forEach(([k, n], i, arr) => {
+      if (i && arr[i - 1][1] === n) order[order.length - 1].push(k); else order.push([k]);
+    });
+    if (await host(false, { runoff: { ...runoff, open: false }, decided: { [sigOf(c, runoff.candidates)]: JSON.stringify(order) } })) {
+      phase = "drum"; cue(); // fresh drumroll before the reveal
+    }
   }
   drawStage();
 }
 $("announceBtn").addEventListener("click", () => {
-  slide = 0; phase = "drum"; $("stage").classList.remove("hidden"); drawStage();
+  slide = 0; step = 0; phase = "drum"; $("stage").classList.remove("hidden"); drawStage(); sound.roll();
   document.documentElement.requestFullscreen?.().catch(() => {});
 });
 $("stage").addEventListener("click", (e) => { const a = e.target.closest("[data-a]")?.dataset.a; if (a) stageGo(a); });
