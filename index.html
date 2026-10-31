@@ -22,16 +22,16 @@ window.PARTY = {
   // places: how many prize places to announce (3 = 1st, 2nd and 3rd). Leave it out for a single winner.
   // group: true means guests vote for a squad (group or duo) instead of a person.
   categories: [
-    { id: "best", places: 3, name: "Best Dressed to Distress", icon: "👑", blurb: "Best overall Halloween costume",
-      criteria: ["Visual impact: stands out at first glance", "Attention to detail: costume, makeup and accessories work together", "Character portrayal: brings the look to life through poses and attitude"] },
-    { id: "scary", places: 3, name: "Nightmare Fuel Award", icon: "👻", blurb: "Scariest costume of the night",
-      criteria: ["Fear factor: gives guests the chills", "Creepy details: effective makeup, props or unsettling touches", "Spooky performance: expressions, movements or sounds that scare"] },
-    { id: "creative", places: 3, name: "Wickedly Creative Award", icon: "🎨", blurb: "Most original or imaginative costume",
-      criteria: ["Originality: a fresh or unexpected idea", "Resourcefulness: uses materials or everyday items imaginatively", "Execution: makes the creative concept clear and convincing"] },
+    { id: "squad", places: 3, name: "Squad Ghouls Award", icon: "🧛", blurb: "Best coordinated group or duo costume", group: true,
+      criteria: ["Theme cohesion: everyone clearly fits the shared concept", "Group creativity: an imaginative take on the theme", "Team performance: members interact and bring the theme to life together"] },
     { id: "funny", places: 3, name: "Laugh Till You Drop Dead Award", icon: "😂", blurb: "Funniest Halloween costume",
       criteria: ["Humor: gets the biggest laughs", "Cleverness: a witty concept, pun or playful twist", "Comic delivery: funny gestures, expressions or interactions"] },
-    { id: "squad", places: 3, name: "Squad Ghouls Award", icon: "🧛", blurb: "Best coordinated group or duo costume", group: true,
-      criteria: ["Theme cohesion: everyone clearly fits the shared concept", "Group creativity: an imaginative take on the theme", "Team performance: members interact and bring the theme to life together"] }
+    { id: "creative", places: 3, name: "Wickedly Creative Award", icon: "🎨", blurb: "Most original or imaginative costume",
+      criteria: ["Originality: a fresh or unexpected idea", "Resourcefulness: uses materials or everyday items imaginatively", "Execution: makes the creative concept clear and convincing"] },
+    { id: "scary", places: 3, name: "Nightmare Fuel Award", icon: "👻", blurb: "Scariest costume of the night",
+      criteria: ["Fear factor: gives guests the chills", "Creepy details: effective makeup, props or unsettling touches", "Spooky performance: expressions, movements or sounds that scare"] },
+    { id: "best", places: 3, name: "Best Dressed to Distress", icon: "👑", blurb: "Best overall Halloween costume",
+      criteria: ["Visual impact: stands out at first glance", "Attention to detail: costume, makeup and accessories work together", "Character portrayal: brings the look to life through poses and attitude"] }
   ],
   // Paste your Firebase web config here (see SETUP.md). While it is empty the
   // site runs in DEMO MODE: votes are kept only on this one device.
