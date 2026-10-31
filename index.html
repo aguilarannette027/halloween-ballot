@@ -1105,6 +1105,26 @@ function stepsFor(c) {
 // Drumroll, fanfare and applause made with Web Audio, so there are no sound files to host.
 const sound = (() => {
   let ctx = null, noise = null, timer = null, rumble = null, on = LS.get("hb-sound") !== "off";
+  // Optional recorded sounds: put drumroll.mp3 and/or reveal.mp3 next to index.html and they are used
+  // instead of the built-in drumroll and cymbal. The drumroll plays once, then keeps looping its loudest
+  // last part until the reveal. A missing file quietly falls back to the built-in sound.
+  const files = {}, src = { roll: null };
+  ["drumroll", "reveal"].forEach((n) => {
+    files[n] = fetch(n + ".mp3").then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+  });
+  const buf = async (n) => {
+    const data = await files[n];
+    if (!data || !ctx) return null;
+    if (!(files[n + "Buf"] instanceof AudioBuffer)) files[n + "Buf"] = await ctx.decodeAudioData(data.slice(0)).catch(() => null);
+    return files[n + "Buf"];
+  };
+  const playBuf = (b, loop) => {
+    const s = ctx.createBufferSource(), g = ctx.createGain();
+    s.buffer = b; g.gain.value = 0.9;
+    if (loop) { s.loop = true; s.loopStart = b.duration * 0.6; s.loopEnd = b.duration; }
+    s.connect(g).connect(ctx.destination); s.start();
+    return s;
+  };
   const init = () => {
     ctx ||= new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
@@ -1158,10 +1178,13 @@ const sound = (() => {
     get on() { return on; },
     toggle() { on = !on; LS.set("hb-sound", on ? "on" : "off"); if (!on) this.stop(); return on; },
     // A snare roll over a timpani rumble that builds until the host reveals.
-    roll() {
+    async roll() {
       this.stop();
       if (!on) return;
       try { init(); } catch { return; }
+      const id = (this.rollId = (this.rollId || 0) + 1), b = await buf("drumroll");
+      if (id !== this.rollId) return;   // stopped or restarted while loading
+      if (b) { src.roll = playBuf(b, true); return; }
       const dest = out(), start = ctx.currentTime;
       const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lfoG = ctx.createGain(), g = ctx.createGain();
       o.frequency.value = 62; lfo.frequency.value = 5; lfoG.gain.value = 0.12;
@@ -1178,14 +1201,16 @@ const sound = (() => {
         }
       }, 40);
     },
-    stop() { clearInterval(timer); timer = null; rumble?.stop(); rumble = null; },
+    stop() { this.rollId = (this.rollId || 0) + 1; try { src.roll?.stop(); } catch {} src.roll = null; clearInterval(timer); timer = null; rumble?.stop(); rumble = null; },
     // The reveal: cymbal crash, a "ta-da" brass fanfare, then applause.
-    celebrate() {
+    async celebrate() {
       this.stop();
       if (!on) return;
       try { init(); } catch { return; }
+      const id = this.rollId, hit = await buf("reveal");
+      if (id !== this.rollId) return;
       const dest = out(), t = ctx.currentTime + 0.03;
-      crash(t, dest);
+      hit ? playBuf(hit, false) : crash(t, dest);
       [[523, 0.11], [659, 0.11], [784, 0.11]].forEach(([f, d], i) => tone(f, t + i * 0.12, d, 0.12, dest));
       [523, 659, 784, 1047].forEach((f) => tone(f, t + 0.36, 1.4, 0.09, dest));
       tone(262, t + 0.36, 1.4, 0.1, dest, "square");
